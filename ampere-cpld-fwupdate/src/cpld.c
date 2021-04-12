@@ -21,7 +21,7 @@ const char *cpld_list[] = {
   "MAX10-10M25",
 };
 
-static int cpld_probe(cpld_intf_t intf, uint8_t id, void *attr)
+static int cpld_probe(cpld_intf_t intf, uint8_t id, cpld_intf_info_t *attr)
 {
   if (cur_dev == NULL)
     return -1;
@@ -62,7 +62,7 @@ static int cpld_malloc_list()
   return dev_cnts;
 }
 
-int cpld_intf_open(uint8_t cpld_index, cpld_intf_t intf, void *attr)
+int cpld_intf_open(uint8_t cpld_index, cpld_intf_t intf, cpld_intf_info_t *attr)
 {
   int i;
   int dev_cnts;
@@ -114,6 +114,31 @@ int cpld_get_ver(uint32_t *ver)
   }
 
   return cur_dev->cpld_ver(ver);
+}
+
+int cpld_get_checksum(char *file, uint32_t *crc)
+{
+  int ret;
+  FILE *fp_in = NULL;
+
+  if (cur_dev == NULL)
+    return -1;
+
+  if (!cur_dev->cpld_checksum) {
+    printf("Program CPLD not supported\n");
+    return -1;
+  }
+
+  fp_in = fopen(file, "r");
+  if (NULL == fp_in) {
+    printf("[%s] Cannot Open File %s!\n", __func__, file);
+    return -1;
+  }
+
+  ret = cur_dev->cpld_checksum(fp_in, crc);
+  fclose(fp_in);
+
+  return ret;
 }
 
 int cpld_get_device_id(uint32_t *dev_id)

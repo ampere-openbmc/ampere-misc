@@ -12,10 +12,24 @@ add_project_arguments('-Wno-psabi', language: 'c')
 deps = [dependency('systemd'),
 ]
 
-executable('ampere_cpld_fwupdate',
-           'src/main.c',
+executable('ampere_cpldupdate_jtag',
+           'src/cpldupdate-jtag.c',
            'src/ast-jtag.c',
            'src/ast-jtag-intf.c',
+           'src/i2c-lib.c',
+           'src/lattice.c',
+           'src/cpld.c',
+           implicit_include_directories: false,
+           include_directories: ['include'],
+           dependencies: deps,
+           install: true,
+           install_dir: get_option('bindir'))
+           
+executable('ampere_cpldupdate_i2c',
+           'src/cpldupdate-i2c.c',
+           'src/ast-jtag.c',
+           'src/ast-jtag-intf.c',
+           'src/i2c-lib.c',
            'src/lattice.c',
            'src/cpld.c',
            implicit_include_directories: false,

@@ -22,6 +22,7 @@ typedef struct {
   int erase;                      /* enable/disable erase flag */
   int get_version;                /* get cpld version flag */
   int get_device;                 /* get cpld ID code flag */
+  int checksum;                   /* get checksum flag */
 }cpld_t;
 
 static void usage(FILE *fp, char **argv)
@@ -33,11 +34,12 @@ static void usage(FILE *fp, char **argv)
           " -p | --program                Erase, program and verify cpld\n"
           " -v | --get-cpld-version       Get current cpld version\n"
           " -i | --get-cpld-idcode        Get cpld idcode\n"
+          " -c | --checksum               Calculate CPLD checksum\n"
           "",
           argv[0]);
 }
 
-static const char short_options [] = "hvip:";
+static const char short_options [] = "hvip:c:";
 
 static const struct option
   long_options [] = {
@@ -45,6 +47,7 @@ static const struct option
   { "program",              required_argument,  NULL,    'p' },
   { "get-cpld-version",     no_argument,        NULL,    'v' },
   { "get-cpld-idcode",      no_argument,        NULL,    'i' },
+  { "checksum",             required_argument,   NULL,    'c' },
   { 0, 0, 0, 0 }
 };
 
@@ -69,11 +72,9 @@ int main(int argc, char *argv[]){
   char key[32]= {0};
   cpld_t cpld;
   int rc = -1;
+  unsigned int crc = 0;
 
-  printf( "\n******************************************************************\n" );
-  printf( "                 Ampere Computing.\n" );
-  printf( "             ampere_cpld_fwupdate-v0.0.1 Copyright 2021.\n");
-  printf( "******************************************************************\n\n" );
+  printf( "\nampere_cpldupdate_jtag v0.0.1 Copyright 2021.\n\n");
 
   memset(&cpld, 0, sizeof(cpld));
 
@@ -97,6 +98,15 @@ int main(int argc, char *argv[]){
           break;
       case 'i':
           cpld.get_device = 1;
+          break;
+      case 'c':
+          cpld.checksum = 1;
+          strcpy(in_name, optarg);
+          if (!strcmp(in_name, "")) {
+              printf("No input file name!\n");
+              usage(stdout, argv);
+              exit(EXIT_FAILURE);
+          }
           break;
       default:
           usage(stdout, argv);
@@ -125,6 +135,15 @@ int main(int argc, char *argv[]){
     } else {
       printf("CPLD DeviceID: %02X%02X%02X%02X\n", cpld_var[3], cpld_var[2],
               cpld_var[1], cpld_var[0]);
+    }
+    exit(EXIT_SUCCESS);
+  }
+
+  if (cpld.checksum) {
+    if (cpld_get_checksum(in_name, &crc)) {
+      printf("CPLD Checksum: NA\n");
+    } else {
+      printf("CPLD Checksum: %X\n", crc);
     }
     exit(EXIT_SUCCESS);
   }
