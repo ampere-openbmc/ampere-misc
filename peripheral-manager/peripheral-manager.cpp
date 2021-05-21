@@ -54,9 +54,6 @@ namespace nic
 using namespace std;
 using namespace phosphor::logging;
 
-static int nvmeMaxTemp = 0;
-static const std::string nvmeMaxTempName = "_max";
-
 static std::vector<PeripheralManager::PciePeripheral> supported = {
     {0x8119, 0x1017, "Mellanox Technologies MT27800 Family [ConnectX-5]"}
 };
@@ -253,12 +250,6 @@ bool PeripheralManager::getNVMeInfobyBusID(
             peripheralData.sensorValue = tempValue;
             peripheralData.mfrId = vendorId;
             peripheralData.serial.insert(peripheralData.serial.end(), tmp.begin(), tmp.end());
-
-            /* Update the NVME maximum temp value */
-            if (tempValue > nvmeMaxTemp)
-            {
-                nvmeMaxTemp = tempValue;
-            }
         }
     }
     catch (const std::exception& e)
@@ -547,31 +538,9 @@ void PeripheralManager::readPeripheralData(PeripheralConfig& config)
     }
 }
 
-void PeripheralManager::nvmeMaxTempSensor()
-{
-    std::string objPath;
-    std::string sensorName;
-
-    sensorName = std::to_string(NVME) + nvmeMaxTempName;
-    auto result = peripherals.find(sensorName);
-    if (result == peripherals.end())
-    {
-        objPath = NVME_OBJ_PATH + nvmeMaxTempName;
-        auto peripheral = std::make_shared<phosphor::nic::Nic>(bus, objPath.c_str());
-
-        peripherals.emplace(sensorName, peripheral);
-        peripheral->setSensorValueToDbus(nvmeMaxTemp);
-    }
-    else
-    {
-        result->second->setSensorValueToDbus(nvmeMaxTemp);
-    }
-}
-
 /** @brief Monitor every one second  */
 void PeripheralManager::read()
 {
-    nvmeMaxTemp = 0;
     for (auto config : configs)
     {
         std::string inventoryPath;
@@ -596,8 +565,6 @@ void PeripheralManager::read()
         setPeripheralInventoryProperties(false, peripheralData, inventoryPath);
         readPeripheralData(config);
 
-        /* Update nvme max temp sensor */
-        nvmeMaxTempSensor();
     }
 }
 } // namespace nic

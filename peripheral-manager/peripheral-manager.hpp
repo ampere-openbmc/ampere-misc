@@ -143,9 +143,6 @@ class PeripheralManager
     bool getNVMeInfobyBusID(
         PeripheralConfig& config, phosphor::nic::PeripheralManager::PeripheralData& peripheralData);
 
-    /** @brief Update nvme max temp sensor */
-    void nvmeMaxTempSensor();
-
     std::string nvmeSerialFormat(std::vector<uint8_t> serial);
     std::string nvmeNameFormat(uint16_t vendorId);
 };
