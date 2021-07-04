@@ -44,18 +44,10 @@ namespace binder
 {
 /* const */
 constexpr const char* profInterface = "org.freedesktop.DBus.Properties";
-
-const static constexpr char* chassisPath      =
-                            "/xyz/openbmc_project/state/chassis0";
-const static constexpr char* chassisStateIntf =
-                            "xyz.openbmc_project.State.Chassis";
-const static constexpr char* chassisTransProp = "RequestedPowerTransition";
-
 const static constexpr char* hostService   = "xyz.openbmc_project.State.Host";
 const static constexpr char* hostPath    = "/xyz/openbmc_project/state/host0";
 const static constexpr char* hostStateIntf = "xyz.openbmc_project.State.Host";
 const static constexpr char* hostStateProp  = "CurrentHostState";
-const static constexpr char* hostTransProp = "RequestedHostTransition";
 const static constexpr int DEFAULT_BIND_DELAY = 0;
 const static constexpr int DEFAULT_UNBIND_DELAY = 0;
 const static constexpr int MSG_BUFFER_LENGTH = 256;
@@ -166,8 +158,6 @@ static int bindHostDrivers(Json js, bool bind)
         cmd = "echo " + name + " > " + path;
         if (bind) {
             if (fileExists(path + name)) {
-                snprintf(buff, MSG_BUFFER_LENGTH, "%s : is already binded!\n", name.c_str());
-                log<level::INFO>(buff);
                 continue;
             }
             cmd = cmd + "bind";
@@ -177,8 +167,6 @@ static int bindHostDrivers(Json js, bool bind)
         }
         else {
             if (!fileExists(path + name)) {
-                snprintf(buff, MSG_BUFFER_LENGTH, "%s : is already unbinded!\n", name.c_str());
-                log<level::INFO>(buff);
                 continue;
             }
             cmd = cmd + "unbind";
@@ -202,47 +190,15 @@ static std::unique_ptr<sdbusplus::bus::match::match> signalHostTransitionState()
             boost::container::flat_map<std::string, std::variant<std::string>>
                 values;
             message.read(objectName, values);
-            auto findState = values.find(hostTransProp);
+            auto findState = values.find(hostStateProp);
             if (findState != values.end()) {
-                bool toOff = boost::ends_with(
-                        std::get<std::string>(findState->second), "Off");
-                if (toOff) {
-                    log<level::INFO>("The host is going to off. Unbind hwmon driver.\n");
-                    bindHostDrivers(hostDrivers, 0);
-                }
-                return;
-            }
-            findState = values.find(hostStateProp);
-            if (findState != values.end()) {
-                bool toOff = boost::ends_with(
-                        std::get<std::string>(findState->second), "Off");
-                if (!toOff) {
-                    log<level::INFO>("The host is going to On. Bind hwmon driver.\n");
+                bool isOn = boost::ends_with(
+                        std::get<std::string>(findState->second), ".Running");
+                if (isOn) {
                     bindHostDrivers(hostDrivers, 1);
                 }
-                return;
-            }
-        });
-}
-
-static std::unique_ptr<sdbusplus::bus::match::match> signalChassisTransitionState()
-{
-    return std::make_unique<sdbusplus::bus::match::match>(
-        *conn,
-        "type='signal',interface='" + std::string(profInterface)
-            + "',path='" + std::string(chassisPath) + "',arg0='"
-            + std::string(chassisStateIntf) + "'",
-        [](sdbusplus::message::message& message) {
-            std::string objectName;
-            boost::container::flat_map<std::string, std::variant<std::string>>
-                values;
-            message.read(objectName, values);
-            auto findState = values.find(chassisTransProp);
-            if (findState != values.end()) {
-                bool toOff = boost::ends_with(
-                        std::get<std::string>(findState->second), "Off");
-                if (toOff) {
-                    log<level::INFO>("The chassis is going to off. Unbind hwmon driver.\n");
+                else
+                {
                     bindHostDrivers(hostDrivers, 0);
                 }
                 return;
@@ -264,8 +220,6 @@ int main(int argc, char** argv)
     std::vector<std::unique_ptr<sdbusplus::bus::match::match>> matches;
     std::unique_ptr<sdbusplus::bus::match::match> powerMonitor =
         ampere::binder::signalHostTransitionState();
-    matches.emplace_back(std::move(powerMonitor));
-    powerMonitor = ampere::binder::signalChassisTransitionState();
     matches.emplace_back(std::move(powerMonitor));
 
     /* wait for the signal */
