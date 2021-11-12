@@ -1,5 +1,7 @@
 [Unit]
 Description=Host State Monitoring and Logging
+Wants=xyz.openbmc_project.State.Host.service
+After=xyz.openbmc_project.State.Host.service
 
 [Service]
 Restart=on-failure
