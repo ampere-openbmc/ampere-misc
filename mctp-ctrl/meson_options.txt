@@ -1,0 +1,2 @@
+# Timing specifications for MCTP control
+option('delay-before-add-terminus', type: 'integer', min: 0, max: 30000, description: 'The delay after FW_BOOT_OK go hight to allow MPRo ready for response PLDM commands', value: 2000)
