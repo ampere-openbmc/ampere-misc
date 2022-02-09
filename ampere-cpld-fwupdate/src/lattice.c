@@ -650,6 +650,7 @@ jtag_cpld_end()
 static int
 jtag_cpld_check_id()
 {
+#if 0
   unsigned int dr_data[4] = {0};
   int ret = -1;
   unsigned int i;
@@ -676,6 +677,9 @@ jtag_cpld_check_id()
   }
 
   return ret;
+#else
+  return 0;
+#endif
 }
 
 /*write cf data*/
@@ -857,7 +861,7 @@ jtag_cpld_checksum(FILE *jed_fd, unsigned int *crc)
   ast_jtag_sir_xfer(JTAG_STATE_TLRESET, LATTICE_INS_LENGTH, LCMXO2_LSC_READ_INCR_NV);
   usleep(1000);
 
-  CPLD_DEBUG("[%s] dev_info->CF_Line: %d\n", __func__, dev_info->CF_Line);
+//  CPLD_DEBUG("[%s] dev_info->CF_Line: %d\n", __func__, dev_info->CF_Line);
 
   for(i = 0; i < dev_info.CF_Line; i++)
   {
@@ -1387,6 +1391,7 @@ i2c_cpld_end()
 static int
 i2c_cpld_check_id()
 {
+#if 0
   unsigned int dr_data[4] = {0};
   int ret = -1;
   unsigned int i;
@@ -1405,6 +1410,9 @@ i2c_cpld_check_id()
   }
 
   return ret;
+#else
+  return 0;
+#endif
 }
 
 /*write cf data*/
@@ -2018,8 +2026,7 @@ LCMXO2Family_cpld_dev_close(cpld_intf_t intf)
 /******************************************************************************/
 struct cpld_dev_info lattice_dev_list[] = {
   [0] = {
-    .name = "LCMXO2-2000HC",
-    .dev_id = 0x012BB043,
+    .name = "LCMXO2-Family",
     .cpld_open = LCMXO2Family_cpld_dev_open,
     .cpld_close = LCMXO2Family_cpld_dev_close,
     .cpld_ver = LCMXO2Family_cpld_get_ver,
@@ -2028,18 +2035,7 @@ struct cpld_dev_info lattice_dev_list[] = {
     .cpld_checksum = LCMXO2Family_cpld_checksum,
   },
   [1] = {
-    .name = "LCMXO2-4000HC",
-    .dev_id = 0x012BC043,
-    .cpld_open = LCMXO2Family_cpld_dev_open,
-    .cpld_close = LCMXO2Family_cpld_dev_close,
-    .cpld_ver = LCMXO2Family_cpld_get_ver,
-    .cpld_program = LCMXO2Family_cpld_update,
-    .cpld_dev_id = LCMXO2Family_cpld_get_id,
-    .cpld_checksum = LCMXO2Family_cpld_checksum,
-  },
-  [2] = {
-    .name = "LCMXO2-7000HC",
-    .dev_id = 0x012BD043,
+    .name = "LCMXO3-Family",
     .cpld_open = LCMXO2Family_cpld_dev_open,
     .cpld_close = LCMXO2Family_cpld_dev_close,
     .cpld_ver = LCMXO2Family_cpld_get_ver,

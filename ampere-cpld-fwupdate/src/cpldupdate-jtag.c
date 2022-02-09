@@ -114,7 +114,8 @@ int main(int argc, char *argv[]){
       }
   }
 
-  if (cpld_intf_open(LCMXO2_4000HC, INTF_JTAG, NULL)) {
+  /* No different between LCMX02 and LCMX03 now */
+  if (cpld_intf_open(LCMXO2, INTF_JTAG, NULL)) {
     printf("CPLD_INTF Open failed!\n");
     exit(EXIT_FAILURE);
   }

@@ -133,8 +133,9 @@ int main(int argc, char *argv[]){
     exit(EXIT_FAILURE);
   }
 
+  /* No different between LCMX02 and LCMX03 now */
   cpld_info.intf = INTF_I2C;
-  if (cpld_intf_open(LCMXO2_2000HC, INTF_I2C, &cpld_info)) {
+  if (cpld_intf_open(LCMXO2, INTF_I2C, &cpld_info)) {
     printf("CPLD_INTF Open failed!\n");
     exit(EXIT_FAILURE);
   }

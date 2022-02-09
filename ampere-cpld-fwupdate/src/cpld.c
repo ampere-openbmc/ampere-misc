@@ -14,11 +14,8 @@ struct cpld_dev_info **cpld_dev_list;
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
 const char *cpld_list[] = {
-  "LCMXO2-2000HC",
-  "LCMXO2-4000HC",
-  "LCMXO2-7000HC",
-  "MAX10-10M16",
-  "MAX10-10M25",
+  "LCMXO2-Family",
+  "LCMXO3-Family",
 };
 
 static int cpld_probe(cpld_intf_t intf, uint8_t id, cpld_intf_info_t *attr)

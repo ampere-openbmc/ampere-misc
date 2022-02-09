@@ -54,11 +54,8 @@ struct cpld_dev_info {
 };
 
 enum {
-  LCMXO2_2000HC = 0,
-  LCMXO2_4000HC,
-  LCMXO2_7000HC,
-  MAX10_10M16,
-  MAX10_10M25,
+  LCMXO2 = 0,
+  LCMXO3 = 1, //TBD. No different between LCMX03 and LCMX02
   UNKNOWN_DEV
 };
 

@@ -52,5 +52,5 @@ int lcmxo2_2000hc_cpld_verify(FILE *jed_fd);
 #endif
 
 /*************************************************************************************/
-extern struct cpld_dev_info lattice_dev_list[3];
+extern struct cpld_dev_info lattice_dev_list[2];
 #endif
