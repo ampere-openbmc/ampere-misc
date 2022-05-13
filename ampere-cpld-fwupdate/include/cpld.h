@@ -29,6 +29,7 @@ typedef struct {
   int fd;
   int bus;
   int slave;
+  int type;
 } cpld_intf_info_t;
 
 int cpld_intf_open(uint8_t cpld_index, cpld_intf_t intf, cpld_intf_info_t *attr);
@@ -56,6 +57,7 @@ struct cpld_dev_info {
 enum {
   LCMXO2 = 0,
   LCMXO3 = 1, //TBD. No different between LCMX03 and LCMX02
+  ANLOGIC = 2,
   UNKNOWN_DEV
 };
 

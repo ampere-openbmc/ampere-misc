@@ -7,6 +7,7 @@ Please get the JEDEC file format before you read the code
 #include <string.h>
 #include "cpld.h"
 #include "lattice.h"
+#include "anlogic.h"
 
 struct cpld_dev_info *cur_dev = NULL;
 struct cpld_dev_info **cpld_dev_list;
@@ -16,6 +17,7 @@ struct cpld_dev_info **cpld_dev_list;
 const char *cpld_list[] = {
   "LCMXO2-Family",
   "LCMXO3-Family",
+  "ANLOGIC-Family"
 };
 
 static int cpld_probe(cpld_intf_t intf, uint8_t id, cpld_intf_info_t *attr)
@@ -46,15 +48,21 @@ static int cpld_remove(cpld_intf_t intf)
 
 static int cpld_malloc_list()
 {
-  unsigned int i, j = 0;
+  unsigned int i, j, k = 0;
   unsigned int dev_cnts = 0;
 
   dev_cnts += ARRAY_SIZE(lattice_dev_list);
+  dev_cnts += ARRAY_SIZE(anlogic_dev_list);
 
   cpld_dev_list = (struct cpld_dev_info **)malloc(sizeof(struct cpld_dev_info *) * dev_cnts);
-
-  for (i = 0; i < ARRAY_SIZE(lattice_dev_list); i++, j++)
-    cpld_dev_list[j] = &lattice_dev_list[i];
+  for (i = 0; i < dev_cnts; i++, j++) {
+    if (i < ARRAY_SIZE(lattice_dev_list))
+        cpld_dev_list[j] = &lattice_dev_list[i];
+    else {
+        k = i - ARRAY_SIZE(lattice_dev_list);
+        cpld_dev_list[j] = &anlogic_dev_list[k];
+    }
+  }
 
   return dev_cnts;
 }

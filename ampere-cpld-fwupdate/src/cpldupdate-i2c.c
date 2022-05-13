@@ -31,7 +31,12 @@ typedef struct {
 static void usage(FILE *fp, char **argv)
 {
   fprintf(fp,
-          "Usage: %s -b <bus> -s <slave> [options]\n\n"
+          "\nampere_cpldupdate_i2c v0.0.1 Copyright 2022.\n\n"
+          "Usage: %s -b <bus> -s <slave> -t <type> [options]\n\n"
+          "Type:\n"
+          " 0 - LCMXO2\n"
+          " 1 - LCMXO3\n"
+          " 2 - ANLOGIC\n"
           "Options:\n"
           " -h | --help                   Print this message\n"
           " -p | --program                Erase, program and verify cpld\n"
@@ -42,7 +47,7 @@ static void usage(FILE *fp, char **argv)
           argv[0]);
 }
 
-static const char short_options [] = "hvic:p:b:s:";
+static const char short_options [] = "hvic:p:b:s:t:";
 
 static const struct option
   long_options [] = {
@@ -71,14 +76,12 @@ static void printf_failure()
 int main(int argc, char *argv[]){
   char option;
   char in_name[100]  = "";
-  uint8_t cpld_var[4] = {0};
+  uint8_t cpld_var[16] = {0};
   char key[32]= {0};
   cpld_t cpld;
   int rc = -1;
   cpld_intf_info_t cpld_info;
   uint32_t crc;
-
-  printf( "\nampere_cpldupdate_i2c v0.0.1 Copyright 2021.\n\n");
 
   memset(&cpld, 0, sizeof(cpld));
   memset(&cpld_info, 0, sizeof(cpld_info));
@@ -92,6 +95,10 @@ int main(int argc, char *argv[]){
       case 'b':
         strcpy(in_name, optarg);
         cpld_info.bus = (uint8_t)strtoul(in_name, NULL, 0);
+        break;
+      case 't':
+        strcpy(in_name, optarg);
+        cpld_info.type = (uint8_t)strtoul(in_name, NULL, 0);
         break;
       case 's':
         strcpy(in_name, optarg);
@@ -135,7 +142,7 @@ int main(int argc, char *argv[]){
 
   /* No different between LCMX02 and LCMX03 now */
   cpld_info.intf = INTF_I2C;
-  if (cpld_intf_open(LCMXO2, INTF_I2C, &cpld_info)) {
+  if (cpld_intf_open(cpld_info.type, INTF_I2C, &cpld_info)) {
     printf("CPLD_INTF Open failed!\n");
     exit(EXIT_FAILURE);
   }
@@ -143,9 +150,6 @@ int main(int argc, char *argv[]){
   if (cpld.get_version) {
     if (cpld_get_ver((unsigned int *)&cpld_var)) {
       printf("CPLD Version: NA\n");
-    } else {
-      printf("CPLD Version: %02X%02X%02X%02X\n", cpld_var[3], cpld_var[2],
-              cpld_var[1], cpld_var[0]);
     }
     exit(EXIT_SUCCESS);
   }
@@ -153,9 +157,6 @@ int main(int argc, char *argv[]){
   if (cpld.get_device) {
     if (cpld_get_device_id((unsigned int *)&cpld_var)) {
       printf("CPLD DeviceID: NA\n");
-    } else {
-      printf("CPLD DeviceID: %02X%02X%02X%02X\n", cpld_var[3], cpld_var[2],
-              cpld_var[1], cpld_var[0]);
     }
     exit(EXIT_SUCCESS);
   }
@@ -173,16 +174,10 @@ int main(int argc, char *argv[]){
     // Print CPLD Version
     if (cpld_get_ver((unsigned int *)&cpld_var)) {
       printf("CPLD Version: NA\n");
-    } else {
-      printf("CPLD Version: %02X%02X%02X%02X\n", cpld_var[3], cpld_var[2],
-              cpld_var[1], cpld_var[0]);
     }
     // Print CPLD Device ID
     if (cpld_get_device_id((unsigned int *)&cpld_var)) {
       printf("CPLD DeviceID: NA\n");
-    } else {
-      printf("CPLD DeviceID: %02X%02X%02X%02X\n", cpld_var[3], cpld_var[2],
-              cpld_var[1], cpld_var[0]);
     }
     rc = cpld_program(in_name, key, 0);
     if(rc < 0) {

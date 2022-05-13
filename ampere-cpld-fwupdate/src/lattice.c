@@ -511,6 +511,7 @@ jtag_cpld_get_id(unsigned int *dev_id)
   ast_jtag_tdo_xfer(JTAG_STATE_TLRESET, 32, dr_data);
 
   *dev_id = dr_data[0];
+  printf("CPLD DeviceID: %X\n", *dev_id);
 
   return 0;
 }
@@ -790,6 +791,7 @@ jtag_cpld_get_ver(unsigned int *ver)
   ast_jtag_tdo_xfer(JTAG_STATE_TLRESET, 32, dr_data);
   *ver = dr_data[0];
 
+  printf("CPLD Version: %X\n", *ver);
   ret = jtag_cpld_end();
   if (ret < 0)
   {
@@ -1099,7 +1101,7 @@ error_exit:
 }
 
 
-int
+static int
 jtag_cpld_update(FILE *jed_fd, char* key, char is_signed)
 {
   CPLDInfo dev_info = {0};
@@ -1217,6 +1219,7 @@ i2c_cpld_get_id(unsigned int *dev_id)
   CPLD_DEBUG("Read Device ID = 0x%X 0x%X 0x%X 0x%X -\n",
       dr_data[0], dr_data[1], dr_data[2], dr_data[3]);
   *dev_id = byte_to_int(dr_data);
+  printf("CPLD DeviceID: %X\n", *dev_id);
 
   return 0;
 }
@@ -1530,6 +1533,7 @@ i2c_cpld_get_ver(unsigned int *ver)
   //Read UserCode
   *ver = byte_to_int(dr_data);
   CPLD_DEBUG("USERCODE= 0x%X\n", *ver);
+  printf("CPLD Version: %X\n", *ver);
 
   ret = i2c_cpld_end();
   if (ret < 0)
@@ -1850,7 +1854,7 @@ error_exit:
 }
 
 
-int
+static int
 i2c_cpld_update(FILE *jed_fd, char* key, char is_signed)
 {
   CPLDInfo dev_info = {0};
@@ -2044,4 +2048,5 @@ struct cpld_dev_info lattice_dev_list[] = {
     .cpld_checksum = LCMXO2Family_cpld_checksum,
   }
 };
+
 
