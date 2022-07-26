@@ -7,11 +7,12 @@ typedef uint32_t __u32;
 typedef uint64_t __u64;
 #include "jtag.h"
 
-#define JTAG_DEVICE           "/dev/jtag0"
+#define JTAG_DEVICE0           "/dev/jtag0"
+#define JTAG_DEVICE1           "/dev/jtag1"
 
 /******************************************************************************************************************/
 void ast_jtag_set_mode(unsigned int mode);
-int ast_jtag_open(void);
+int ast_jtag_open(int jtag);
 void ast_jtag_close(void);
 unsigned int ast_get_jtag_freq(void);
 int ast_set_jtag_freq(unsigned int freq);

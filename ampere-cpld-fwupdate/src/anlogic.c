@@ -592,7 +592,7 @@ ANLOGICFamily_cpld_dev_open(cpld_intf_t intf, uint8_t id, cpld_intf_info_t *attr
 
     if (intf == INTF_JTAG) {
       ast_jtag_set_mode(JTAG_XFER_HW_MODE);
-      rc = ast_jtag_open();
+      rc = ast_jtag_open(cpld.jtag_device);
     } else if (intf == INTF_I2C) {
       cpld.fd = i2c_open(cpld.bus, cpld.slave);
       if (cpld.fd < 0)

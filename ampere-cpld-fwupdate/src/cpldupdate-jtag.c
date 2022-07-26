@@ -29,12 +29,15 @@ typedef struct {
 static void usage(FILE *fp, char **argv)
 {
   fprintf(fp,
-          "\nampere_cpldupdate_i2c v0.0.1 Copyright 2022.\n\n"
-          "Usage: %s -t <type> [options]\n\n"
+          "\nampere_cpldupdate_i2c v0.0.2 Copyright 2022.\n\n"
+          "Usage: %s -t <type> -d <jtag_device> [options]\n\n"
           "Type:\n"
           " 0 - LCMXO2\n"
           " 1 - LCMXO3\n"
           " 2 - ANLOGIC\n"
+          "Jtag Device: Default is jtag0\n"
+          " 0 - /dev/jtag0\n"
+          " 1 - /dev/jtag1\n"
           "Options:\n"
           " -h | --help                   Print this message\n"
           " -p | --program                Erase, program and verify cpld\n"
@@ -45,7 +48,7 @@ static void usage(FILE *fp, char **argv)
           argv[0]);
 }
 
-static const char short_options [] = "hvip:c:t:";
+static const char short_options [] = "hvip:c:t:d:";
 
 static const struct option
   long_options [] = {
@@ -79,8 +82,10 @@ int main(int argc, char *argv[]){
   cpld_t cpld;
   int rc = -1;
   unsigned int crc = 0;
+  cpld_intf_info_t cpld_info;
 
   memset(&cpld, 0, sizeof(cpld));
+  memset(&cpld_info, 0, sizeof(cpld_info));
 
   while ((option = getopt_long(argc, argv, short_options, long_options, NULL)) != (char) -1) {
       switch (option) {
@@ -91,6 +96,15 @@ int main(int argc, char *argv[]){
       case 't':
         strcpy(in_name, optarg);
         cpld.type = (uint8_t)strtoul(in_name, NULL, 0);
+        break;
+      case 'd':
+        strcpy(in_name, optarg);
+        cpld_info.jtag_device = (uint8_t)strtoul(in_name, NULL, 0);
+        if ((cpld_info.jtag_device != 0) && (cpld_info.jtag_device != 1)) {
+            printf("Wrong jtag device!\n");
+            usage(stdout, argv);
+            exit(EXIT_FAILURE);
+        }
         break;
       case 'p':
           cpld.program = 1;
@@ -123,7 +137,7 @@ int main(int argc, char *argv[]){
   }
 
   /* No different between LCMX02 and LCMX03 now */
-  if (cpld_intf_open(LCMXO2, INTF_JTAG, NULL)) {
+  if (cpld_intf_open(LCMXO2, INTF_JTAG, &cpld_info)) {
     printf("CPLD_INTF Open failed!\n");
     exit(EXIT_FAILURE);
   }

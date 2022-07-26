@@ -31,7 +31,7 @@ typedef struct {
 static void usage(FILE *fp, char **argv)
 {
   fprintf(fp,
-          "\nampere_cpldupdate_i2c v0.0.1 Copyright 2022.\n\n"
+          "\nampere_cpldupdate_i2c v0.0.2 Copyright 2022.\n\n"
           "Usage: %s -b <bus> -s <slave> -t <type> [options]\n\n"
           "Type:\n"
           " 0 - LCMXO2\n"

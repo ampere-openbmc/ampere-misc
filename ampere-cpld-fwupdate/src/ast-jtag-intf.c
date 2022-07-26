@@ -9,7 +9,7 @@ static struct jtag_ops *jtag_ops = &jtag0_ops;
 __attribute__((constructor))
 void __attribute__((constructor)) ast_jtag_init(void)
 {
-  if (access(JTAG_DEVICE, F_OK) == 0) {
+  if ((access(JTAG_DEVICE0, F_OK) == 0) || (access(JTAG_DEVICE1, F_OK) == 0)) {
     jtag_ops = &jtag0_ops;
   }
 }
@@ -20,9 +20,9 @@ void ast_jtag_set_mode(unsigned int mode)
   jtag_ops->set_mode(mode);
 }
 
-int ast_jtag_open(void)
+int ast_jtag_open(int jtag_device)
 {
-  return jtag_ops->open();
+  return jtag_ops->open(jtag_device);
 }
 
 void ast_jtag_close(void)

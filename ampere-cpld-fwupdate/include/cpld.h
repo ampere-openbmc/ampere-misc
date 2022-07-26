@@ -30,6 +30,7 @@ typedef struct {
   int bus;
   int slave;
   int type;
+  int jtag_device;
 } cpld_intf_info_t;
 
 int cpld_intf_open(uint8_t cpld_index, cpld_intf_t intf, cpld_intf_info_t *attr);

@@ -21,11 +21,18 @@ static void _ast_jtag_set_mode(unsigned int mode)
   g_mode = mode;
 }
 
-static int _ast_jtag_open(void)
+static int _ast_jtag_open(int jtag_device)
 {
   struct jtag_mode m;
 
-  jtag_fd = open(JTAG_DEVICE, O_RDWR);
+  if(jtag_device == 0) {
+      jtag_fd = open(JTAG_DEVICE0, O_RDWR);
+  } else if (jtag_device == 1) {
+      jtag_fd = open(JTAG_DEVICE1, O_RDWR);
+  } else {
+      perror("Can't open jtag driver, please install driver!! \n");
+      return -1;
+  }
   if (jtag_fd == -1) {
     perror("Can't open jtag driver, please install driver!! \n");
     return -1;
