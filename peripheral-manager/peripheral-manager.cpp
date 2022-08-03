@@ -40,6 +40,7 @@ static constexpr auto configFile = "/etc/peripheral/config.json";
 #define VENDOR_ID_BROARDCOM                     0x14E4
 #define VENDOR_ID_QUALCOMM                      0x17CB
 #define VENDOR_ID_SSSTC                         0x1E95
+#define VENDOR_ID_MELLANOX                      0x8119
 
 /* static variables */
 static constexpr int SERIALNUMBER_START_INDEX   = 3;
@@ -55,7 +56,36 @@ using namespace std;
 using namespace phosphor::logging;
 
 static std::vector<PeripheralManager::PciePeripheral> supported = {
-    {0x8119, 0x1017, "Mellanox Technologies MT27800 Family [ConnectX-5]"}
+    {VENDOR_ID_MELLANOX, 0x1017, "Mellanox Technologies MT27800 Family [ConnectX-5]"},
+    {VENDOR_ID_MELLANOX, 0x6732, "MT25408A0 ConnectX, Dual Port 20Gb/s PCIe 2.0 x8 5.0GT/s"},
+    {VENDOR_ID_MELLANOX, 0x101F, "Mellanox Technologies MT2894 Family [ConnectX-6 Lx]"},
+    {VENDOR_ID_MELLANOX, 0x1021, "Mellanox Technologies MT2910 Family [ConnectX-7]"},
+    {VENDOR_ID_MELLANOX, 0x1015, "Mellanox Technologies MT27710 Family [ConnectX-4 Lx]"},
+    {VENDOR_ID_MELLANOX, 0x101B, "Mellanox Technologies MT28908 Family [ConnectX-6]"},
+    {VENDOR_ID_MELLANOX, 0x1013, "Mellanox Technologies MT27700 Family [ConnectX-4]"},
+    {VENDOR_ID_MELLANOX, 0x1003, "Mellanox Technologies MT27500 Family [ConnectX-3]"},
+    {VENDOR_ID_MELLANOX, 0x100B, "Mellanox Technologies MT27540 Family"},
+    {VENDOR_ID_MELLANOX, 0x100C, "Mellanox Technologies MT27541 Family"},
+    {VENDOR_ID_MELLANOX, 0x100D, "Mellanox Technologies MT27550 Family"},
+    {VENDOR_ID_MELLANOX, 0x100E, "Mellanox Technologies MT27551 Family"},
+    {VENDOR_ID_MELLANOX, 0x100F, "Mellanox Technologies MT27560 Family"},
+    {VENDOR_ID_MELLANOX, 0x1010, "Mellanox Technologies MT27561 Family"},
+    {VENDOR_ID_BROARDCOM, 0x1751, "Broadcom 25G 4P 57504 OCP card"},
+    {VENDOR_ID_BROARDCOM, 0x1804, "BCM57504 NetXtreme-E RDMA Partition"},
+    {VENDOR_ID_BROARDCOM, 0x1801, "BCM57504 NetXtreme-E Ethernet Partition"},
+    {VENDOR_ID_BROARDCOM, 0x16ED, "BCM57414 NetXtreme-E RDMA Partition"},
+    {VENDOR_ID_BROARDCOM, 0x16EC, "BCM57414 NetXtreme-E Ethernet Partition"},
+    {VENDOR_ID_BROARDCOM, 0x16EB, "BCM57412 NetXtreme-E RDMA Partition"},
+    {VENDOR_ID_BROARDCOM, 0x16DE, "BCM57412 NetXtreme-E Ethernet Partition"},
+    {VENDOR_ID_BROARDCOM, 0x16D6, "BCM57412 NetXtreme-E 10Gb RDMA Ethernet Controller"},
+    {VENDOR_ID_BROARDCOM, 0x16EE, "BCM57416 NetXtreme-E Ethernet Partition"},
+    {VENDOR_ID_BROARDCOM, 0x16EF, "BCM57416 NetXtreme-E RDMA Partition"},
+    {VENDOR_ID_BROARDCOM, 0x16E3, "BCM57416 NetXtreme-E 10Gb RDMA Ethernet Controller"},
+    {VENDOR_ID_BROARDCOM, 0x16D8, "BCM57416 NetXtreme-E Dual-Media 10G RDMA Ethernet Controller"},
+    {VENDOR_ID_BROARDCOM, 0x1802, "BCM57508 NetXtreme-E Ethernet Partition"},
+    {VENDOR_ID_BROARDCOM, 0x1805, "BCM57508 NetXtreme-E RDMA Partition"},
+    {VENDOR_ID_BROARDCOM, 0x1750, "BCM57508 NetXtreme-E 10Gb/25Gb/40Gb/50Gb/100Gb/200Gb Ethernet"},
+    {VENDOR_ID_BROARDCOM, 0x16D7, "BCM57414 NetXtreme-E 10Gb/25Gb RDMA Ethernet Controller"}
 };
 
 void PeripheralManager::setPeripheralInventoryProperties(
