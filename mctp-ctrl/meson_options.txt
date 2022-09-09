@@ -1,3 +1,4 @@
 # Timing specifications for MCTP control
 option('delay-before-add-terminus', type: 'integer', min: 0, max: 90000, description: 'The delay after FW_BOOT_OK go hight to allow MPRo ready for response PLDM commands', value: 2000)
 option('delay-before-add-second-terminus', type: 'integer', min: 0, max: 30000, description: 'The delay after add S0 terminus before add S1 terminus', value: 0)
+option('checking-s1-ready-time-out', type: 'integer', min: 0, max: 30000, description: 'Time out in checking S1 ready', value: 0)

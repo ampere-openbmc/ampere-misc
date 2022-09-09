@@ -36,6 +36,7 @@
 #include <thread>
 
 bool addSoCInterfaces = false;
+bool s1_ready = false;
 // setup connection to dbus
 boost::asio::io_service io;
 auto conn = std::make_shared<sdbusplus::asio::connection>(io);
@@ -47,6 +48,7 @@ std::shared_ptr<sdbusplus::asio::dbus_interface> hostIntS1 = nullptr;
 std::shared_ptr<sdbusplus::asio::dbus_interface> hostPresenceS0 = nullptr;
 std::shared_ptr<sdbusplus::asio::dbus_interface> hostPresenceS1 = nullptr;
 const char* script_slave_present = "/usr/sbin/ampere-slave-present.sh";
+const char* script_s1_ready = "/usr/sbin/ampere_s1_ready.sh";
 constexpr const char* cpuInventoryPath =
     "/xyz/openbmc_project/inventory/system/chassis/motherboard";
 
@@ -103,6 +105,7 @@ sdbusplus::bus::match::match
                         * the MPRo terminus are only added to MCTP D-Bus
                         * interface when the MPRos are ready for PLDM commands.
                         */
+                        int timeout = static_cast<int>(CHECKING_S1_READY_TIME_OUT);
                         std::this_thread::sleep_for(
                             std::chrono::milliseconds(
                                 static_cast<int>(DELAY_BEFORE_ADD_TERMINUS)
@@ -144,16 +147,49 @@ sdbusplus::bus::match::match
                                     )
                                 );
 
-                            std::cerr << "Adding interface S1" << std::endl;
-                            hostIntS1 = objectServer.add_interface(
-                                "/xyz/openbmc_project/mctp/2/22",
-                                "xyz.openbmc_project.MCTP.Endpoint");
-                            val = 2;
-                            hostIntS1->register_property("NetworkId", val);
-                            val = 22;
-                            hostIntS1->register_property("EID", val);
-                            hostIntS1->register_property("SupportedMessageTypes", messTypes);
-                            hostIntS1->initialize();
+                            int cnt = 0;
+                            s1_ready = true;
+                            timeout = timeout/1000;
+                            while (cnt < timeout)
+                            {
+                                try
+                                {
+                                    std::size_t found = exec(script_s1_ready).find("1");
+                                    if (found!=std::string::npos)
+                                    {
+                                        s1_ready= true;
+                                        break;
+                                    }
+                                }
+                                catch(const std::exception& e)
+                                {
+                                    std::cerr << e.what() << std::endl;
+                                }
+                                s1_ready = false;
+                                cnt ++;
+                                std::this_thread::sleep_for(
+                                    std::chrono::milliseconds(1000)
+                                    );
+                            }
+
+                            if (s1_ready)
+                            {
+                                std::this_thread::sleep_for(
+                                    std::chrono::milliseconds(
+                                        static_cast<int>(DELAY_BEFORE_ADD_TERMINUS)
+                                        )
+                                    );
+                                std::cerr << "Adding interface S1" << std::endl;
+                                hostIntS1 = objectServer.add_interface(
+                                    "/xyz/openbmc_project/mctp/2/22",
+                                    "xyz.openbmc_project.MCTP.Endpoint");
+                                val = 2;
+                                hostIntS1->register_property("NetworkId", val);
+                                val = 22;
+                                hostIntS1->register_property("EID", val);
+                                hostIntS1->register_property("SupportedMessageTypes", messTypes);
+                                hostIntS1->initialize();
+                            }
                         }
                         addSoCInterfaces = true;
                     }
@@ -177,8 +213,11 @@ sdbusplus::bus::match::match
                         if (slave_present)
                         {
                             std::cerr << "Removing interface S1" << std::endl;
-                            objectServer.remove_interface(hostIntS1);
-                            hostIntS1 = nullptr;
+                            if (s1_ready)
+                            {
+                                objectServer.remove_interface(hostIntS1);
+                                hostIntS1 = nullptr;
+                            }
                             objectServer.remove_interface(hostPresenceS1);
                             hostPresenceS1 = nullptr;
                         }
@@ -225,6 +264,8 @@ int main(int argc, char** argv)
         << static_cast<int>(DELAY_BEFORE_ADD_TERMINUS) << std::endl;
     std::cerr << "DELAY_BEFORE_ADD_SECOND_TERMINUS : "
         << static_cast<int>(DELAY_BEFORE_ADD_SECOND_TERMINUS) << std::endl;
+    int timeout = static_cast<int>(CHECKING_S1_READY_TIME_OUT);
+    std::cerr << "CHECKING_S1_READY_TIME_OUT : " << timeout << std::endl;
 
     sdbusplus::bus::match::match hostStateMon = startHostStateMonitor(conn);
     io.run();
