@@ -11,6 +11,7 @@ cpp = meson.get_compiler('cpp')
 
 conf_data = configuration_data()
 conf_data.set('DELAY_BEFORE_ADD_TERMINUS', get_option('delay-before-add-terminus'))
+conf_data.set('DELAY_BEFORE_ADD_SECOND_TERMINUS', get_option('delay-before-add-second-terminus'))
 conf_data.set('sbindir', get_option('prefix') / get_option('sbindir'))
 
 systemd = dependency('systemd')

@@ -130,6 +130,20 @@ sdbusplus::bus::match::match
 
                         if (slave_present)
                         {
+                            socName = "CPU_2";
+                            hostPresenceS1 = objectServer.add_interface(
+                                cpuInventoryPath + std::string("/") + socName,
+                                "xyz.openbmc_project.Inventory.Item");
+                            hostPresenceS1->register_property("PrettyName", socName);
+                            hostPresenceS1->register_property("Present", true);
+                            hostPresenceS1->initialize();
+
+                            std::this_thread::sleep_for(
+                                std::chrono::milliseconds(
+                                    static_cast<int>(DELAY_BEFORE_ADD_SECOND_TERMINUS)
+                                    )
+                                );
+
                             std::cerr << "Adding interface S1" << std::endl;
                             hostIntS1 = objectServer.add_interface(
                                 "/xyz/openbmc_project/mctp/2/22",
@@ -140,13 +154,6 @@ sdbusplus::bus::match::match
                             hostIntS1->register_property("EID", val);
                             hostIntS1->register_property("SupportedMessageTypes", messTypes);
                             hostIntS1->initialize();
-                            socName = "CPU_2";
-                            hostPresenceS1 = objectServer.add_interface(
-                                cpuInventoryPath + std::string("/") + socName,
-                                "xyz.openbmc_project.Inventory.Item");
-                            hostPresenceS1->register_property("PrettyName", socName);
-                            hostPresenceS1->register_property("Present", true);
-                            hostPresenceS1->initialize();
                         }
                         addSoCInterfaces = true;
                     }
@@ -216,6 +223,8 @@ int main(int argc, char** argv)
     std::cerr << "Slave present : " << slave_present << std::endl;
     std::cerr << "DELAY_BEFORE_ADD_TERMINUS : "
         << static_cast<int>(DELAY_BEFORE_ADD_TERMINUS) << std::endl;
+    std::cerr << "DELAY_BEFORE_ADD_SECOND_TERMINUS : "
+        << static_cast<int>(DELAY_BEFORE_ADD_SECOND_TERMINUS) << std::endl;
 
     sdbusplus::bus::match::match hostStateMon = startHostStateMonitor(conn);
     io.run();
