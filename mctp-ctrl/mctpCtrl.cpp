@@ -62,7 +62,6 @@ std::string exec(const char* cmd) {
     while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr)
     {
         result += buffer.data();
-        std::cerr << " result : " << result << std::endl;
     }
     return result;
 }
@@ -104,9 +103,6 @@ sdbusplus::bus::match::match
                         * the MPRo terminus are only added to MCTP D-Bus
                         * interface when the MPRos are ready for PLDM commands.
                         */
-                        std::cerr << "DELAY_BEFORE_ADD_TERMINUS : "
-                            << static_cast<int>(DELAY_BEFORE_ADD_TERMINUS)
-                            << std::endl;
                         std::this_thread::sleep_for(
                             std::chrono::milliseconds(
                                 static_cast<int>(DELAY_BEFORE_ADD_TERMINUS)
@@ -218,6 +214,9 @@ int main(int argc, char** argv)
         std::cerr << e.what() << std::endl;
     }
     std::cerr << "Slave present : " << slave_present << std::endl;
+    std::cerr << "DELAY_BEFORE_ADD_TERMINUS : "
+        << static_cast<int>(DELAY_BEFORE_ADD_TERMINUS) << std::endl;
+
     sdbusplus::bus::match::match hostStateMon = startHostStateMonitor(conn);
     io.run();
 
