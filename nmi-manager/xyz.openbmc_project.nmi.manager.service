@@ -1,0 +1,13 @@
+[Unit]
+Description= NMI management
+Wants=obmc-mapper.target
+After=obmc-mapper.target
+
+[Service]
+ExecStart=@bindir@/nmi-manager
+Type=dbus
+BusName=xyz.openbmc_project.Control.Host.NMI
+SyslogIdentifier=nmi-manager
+
+[Install]
+WantedBy=multi-user.target
