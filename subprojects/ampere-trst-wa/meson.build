@@ -11,7 +11,7 @@ add_project_arguments('-Wno-psabi', language: 'c')
 systemd = dependency('systemd')
 
 executable('ampere_trst_wa',
-           'src/ampere-trst-wa.c',
+           'ampere-trst-wa.c',
            implicit_include_directories: false,
            dependencies: [
                 dependency('systemd'),

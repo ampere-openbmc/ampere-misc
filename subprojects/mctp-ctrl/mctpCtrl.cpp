@@ -47,7 +47,7 @@ std::shared_ptr<sdbusplus::asio::dbus_interface> hostIntS0 = nullptr;
 std::shared_ptr<sdbusplus::asio::dbus_interface> hostIntS1 = nullptr;
 std::shared_ptr<sdbusplus::asio::dbus_interface> hostPresenceS0 = nullptr;
 std::shared_ptr<sdbusplus::asio::dbus_interface> hostPresenceS1 = nullptr;
-const char* script_slave_present = "/usr/sbin/ampere-slave-present.sh";
+const char* script_slave_present = "/usr/sbin/ampere_slave_present.sh";
 const char* script_s1_ready = "/usr/sbin/ampere_s1_ready.sh";
 constexpr const char* cpuInventoryPath =
     "/xyz/openbmc_project/inventory/system/chassis/motherboard";

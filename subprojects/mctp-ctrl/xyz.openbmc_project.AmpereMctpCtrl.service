@@ -1,0 +1,11 @@
+[Unit]
+Description = Ampere MCTP Control
+
+[Service]
+Restart=always
+ExecStart=/usr/sbin/ampere-mctp-ctrl
+Type=dbus
+BusName=xyz.openbmc_project.MCTP.Control
+
+[Install]
+WantedBy=multi-user.target

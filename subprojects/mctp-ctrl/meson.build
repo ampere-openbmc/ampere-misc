@@ -17,9 +17,7 @@ conf_data.set('sbindir', get_option('prefix') / get_option('sbindir'))
 
 systemd = dependency('systemd')
 configure_file(output: 'config.h',
-  configuration: conf_data,
-  install: true,
-  install_dir: systemd.get_pkgconfig_variable('systemdsystemunitdir')
+  configuration: conf_data
 )
 
 executable(
@@ -34,3 +32,19 @@ executable(
     install_dir: get_option('sbindir')
 )
 
+configure_file(
+    copy: true,
+    input: 'xyz.openbmc_project.AmpereMctpCtrl.service',
+    output: 'xyz.openbmc_project.AmpereMctpCtrl.service',
+    install: true,
+    install_dir: systemd.get_pkgconfig_variable('systemdsystemunitdir')
+)
+
+script_files = ['ampere_slave_present.sh', 'ampere_s1_ready.sh']
+foreach file : script_files
+    install_data(
+        file,
+        install_mode: 'rwxr-xr-x',
+        install_dir: get_option('sbindir')
+    )
+endforeach
