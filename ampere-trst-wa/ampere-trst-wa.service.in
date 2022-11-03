@@ -1,0 +1,14 @@
+[Unit]
+Description=Ampere AmpereOne Ax JTAG TRST Workaround
+Conflicts=obmc-host-stop@0.target
+Conflicts=phosphor-reset-host-check@0.service
+ConditionPathExists=!/var/ampere/jtag-trst-disable
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c "ampere_trst_wa"
+ExecStop=/bin/sh -c "if [[ "$?" == "0" ]]; then echo Done > /tmp/pcp_pwrgd; else echo ampere-trst-wa time out; fi;"
+SyslogIdentifier=ampere_trst_wa
+
+[Install]
+WantedBy=obmc-host-startmin@0.target
