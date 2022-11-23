@@ -28,6 +28,11 @@ option('ampere-trst-wa', type : 'feature',
     description : 'Enable building ampere-trst-wa'
 )
 
+option('power-manager', type : 'feature',
+    value : 'disabled',
+    description : 'Enable building power-manager'
+)
+
 option('mctp-delay-before-add-terminus', type: 'integer',
   min: 0, max: 90000, value: 2000,
   description: 'The delay after FW_BOOT_OK go high to MPRo ready to response PLDM commands'

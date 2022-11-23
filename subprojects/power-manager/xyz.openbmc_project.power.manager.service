@@ -1,0 +1,14 @@
+[Unit]
+Description= Power manager which follows DCMI specification
+Wants=obmc-mapper.target
+After=obmc-mapper.target
+After=phosphor-virtual-sensor.service
+
+[Service]
+ExecStart=@sbindir@/power-manager
+Type=dbus
+BusName=xyz.openbmc_project.Control.power.manager
+SyslogIdentifier=power-manager
+
+[Install]
+WantedBy=multi-user.target

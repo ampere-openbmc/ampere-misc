@@ -44,3 +44,8 @@ build_ampere_trst_wa = get_option('ampere-trst-wa')
 if build_ampere_trst_wa.enabled()
     subproject('ampere-trst-wa')
 endif
+
+build_power_manager = get_option('power-manager')
+if build_power_manager.enabled()
+    subproject('power-manager')
+endif
