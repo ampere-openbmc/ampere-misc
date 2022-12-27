@@ -8,11 +8,6 @@ option('ampere-cpld-fwupdate', type : 'feature',
     description : 'Enable building ampere-cpld-fwupdate'
 )
 
-option('peripheral-manager', type : 'feature',
-    value : 'disabled',
-    description : 'Enable building peripheral-manager'
-)
-
 option('state-logger', type : 'feature',
     value : 'disabled',
     description : 'Enable building state-logger'

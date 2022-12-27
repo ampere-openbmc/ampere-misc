@@ -19,11 +19,6 @@ if build_cpld_fwupdate.enabled()
     subproject('ampere-cpld-fwupdate')
 endif
 
-build_peripheral_manager = get_option('peripheral-manager')
-if build_peripheral_manager.enabled()
-    subproject('peripheral-manager')
-endif
-
 build_state_logger = get_option('state-logger')
 if build_state_logger.enabled()
     subproject('state-logger')
