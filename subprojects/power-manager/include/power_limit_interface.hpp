@@ -128,6 +128,9 @@ class PowerLimit : public LimitItf
 
     /** @brief the function to turn off the power */
     void turnHardPowerOff();
+
+    /** @brief the function to handle OEM exception action */
+    void handleOEMExceptionAction();
 };
 } // namespace Limit
 } // namespace Power

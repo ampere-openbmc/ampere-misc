@@ -29,6 +29,7 @@ executable(
 
 uint_files = [
     'xyz.openbmc_project.power.manager.service',
+    'power-limit-oem@.service',
 ]
 
 systemd = dependency('systemd')
@@ -56,5 +57,17 @@ foreach file : conf_files
         file,
         install_mode: 'rwxr-xr-x',
         install_dir: share_power_manager_folder
+    )
+endforeach
+
+script_files = [
+    'script/power_limit_oem.sh',
+]
+
+foreach file : script_files
+    install_data(
+        file,
+        install_mode: 'rwxr-xr-x',
+        install_dir: get_option('sbindir')
     )
 endforeach

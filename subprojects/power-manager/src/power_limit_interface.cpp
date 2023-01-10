@@ -23,6 +23,8 @@
 #include <xyz/openbmc_project/Common/error.hpp>
 
 #include <fstream>
+#include <iomanip>
+#include <sstream>
 
 namespace phosphor
 {
@@ -49,6 +51,7 @@ PowerLimit::PowerLimit(sdbusplus::bus_t& bus, const char* path,
 {
     std::ifstream oldCfgFile(oldParametersCfgFile.c_str(),
                              std::ios::in | std::ios::binary);
+
     /*
      * Read the old configuration
      */
@@ -77,6 +80,10 @@ bool PowerLimit::active(bool value)
     // Get current active status
     bool currentAct = LimitItf::active();
 
+    /*
+     * The sampling timer should be enabled only the active state is changed
+     * from "false" to "true"
+     */
     if (true == value && value != currentAct)
     {
         /*
@@ -159,8 +166,11 @@ void PowerLimit::callBackCorrectTimer()
             break;
         }
         default:
-            // OEM action - TBD 
+        {
+            // OEM action - call the service which handle OEM action
+            handleOEMExceptionAction();
             break;
+        }
     }
 }
 
@@ -271,6 +281,33 @@ void PowerLimit::turnHardPowerOff()
     method.append(requestTurnPowerOff);
 
     bus.call_noreply(method);
+}
+
+void PowerLimit::handleOEMExceptionAction()
+{
+    constexpr auto SYSTEMD_SERVICE = "org.freedesktop.systemd1";
+    constexpr auto SYSTEMD_OBJ_PATH = "/org/freedesktop/systemd1";
+    constexpr auto SYSTEMD_INTERFACE = "org.freedesktop.systemd1.Manager";
+
+    std::stringstream serviceStream;
+    auto method = bus.new_method_call(SYSTEMD_SERVICE, SYSTEMD_OBJ_PATH,
+                                    SYSTEMD_INTERFACE, "StartUnit");
+    auto exceptAction = (uint32_t)LimitItf::exceptionAction();
+
+    serviceStream << "power-limit-oem@" << std::setfill ('0') <<
+                     std::setw(sizeof(uint8_t) * 2) << std::hex <<
+                     exceptAction << ".service";
+
+    method.append(serviceStream.str(), "replace");
+
+    try
+    {
+        bus.call_noreply(method);
+    }
+    catch (const sdbusplus::exception_t& e)
+    {
+        error("Error occur when call power-limit-oem@.service");
+    }
 }
 
 } // namespace Limit
