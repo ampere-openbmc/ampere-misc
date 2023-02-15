@@ -1,7 +1,5 @@
 [Unit]
 Description= Example to trigger NMI, user has to update this file
-Wants=obmc-mapper.target
-After=obmc-mapper.target
 
 [Service]
 ExecStart=echo "Example to trigger NMI"

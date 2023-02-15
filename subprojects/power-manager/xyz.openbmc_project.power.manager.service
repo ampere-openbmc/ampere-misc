@@ -1,7 +1,5 @@
 [Unit]
 Description= Power manager which follows DCMI specification
-Wants=obmc-mapper.target
-After=obmc-mapper.target
 After=phosphor-virtual-sensor.service
 
 [Service]
