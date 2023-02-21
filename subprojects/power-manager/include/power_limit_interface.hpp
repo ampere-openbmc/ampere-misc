@@ -123,8 +123,12 @@ class PowerLimit : public LimitItf
     /** @brief the function to store current configuration */
     void writeCurrentCfg();
 
-    /** @brief the function to log SEL event when total power over the limit */
-    void logSELEvent();
+    /** @brief the function to log SEL event
+     *  @param[in] assertFlg - Direction of event
+     *                         true: Total power exceed the limit
+     *                         false: Total power non-exceed the limit
+     */
+    void logSELEvent(bool assertFlg);
 
     /** @brief the function to turn off the power */
     void turnHardPowerOff();

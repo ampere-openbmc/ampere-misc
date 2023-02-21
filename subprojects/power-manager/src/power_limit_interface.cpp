@@ -156,13 +156,13 @@ void PowerLimit::callBackCorrectTimer()
         {
             // Turn power off and log to SEL
             turnHardPowerOff();
-            logSELEvent();
+            logSELEvent(true);
             break;
         }
         case LimitClass::ExceptionActions::SELLog:
         {
             // Log to SEL
-            logSELEvent();
+            logSELEvent(true);
             break;
         }
         default:
@@ -218,6 +218,11 @@ void PowerLimit::callBackSamplingTimer()
             }
             else
             {
+                if (correctTimer.hasExpired())
+                {
+                    logSELEvent(false);
+                }
+
                 /*
                  * Disable correction timer when total power is lower than power
                  * limit
@@ -243,22 +248,25 @@ void PowerLimit::writeCurrentCfg()
     oldCfgFile.close();
 }
 
-void PowerLimit::logSELEvent()
+void PowerLimit::logSELEvent(bool assertFlg)
 {
     constexpr auto ipmiLoggingService = "xyz.openbmc_project.Logging.IPMI";
     constexpr auto ipmiLoggingObjectPath = "/xyz/openbmc_project/Logging/IPMI";
     constexpr auto ipmiLoggingItf = "xyz.openbmc_project.Logging.IPMI";
     // Indicate that event is: Upper Non-recoverable - going high
-    // TODO: Maybe update the event data
+    // TODO: update the event to "Limit Exceeded"/"Limit No Exceeded"
     std::vector<uint8_t> evtData = {0x0B, 0xFF, 0xFF};
     uint16_t genID = 0x20;
     auto method = bus.new_method_call(ipmiLoggingService, ipmiLoggingObjectPath,
                                       ipmiLoggingItf, "IpmiSelAdd");
+    std::string selMsg = (true == assertFlg) ?
+                            "The current power greater than the limit" :
+                            "The current power lower than the limit";
 
-    method.append("The current power greater than the limit");
-    method.append(objectPath.c_str());
+    method.append(selMsg.c_str());
+    method.append(totalPwrObjectPath.c_str());
     method.append(evtData);
-    method.append(true);
+    method.append(assertFlg);
     method.append(genID);
 
     bus.call_noreply(method);
