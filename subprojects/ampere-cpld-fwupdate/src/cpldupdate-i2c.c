@@ -37,6 +37,7 @@ static void usage(FILE *fp, char **argv)
           " 0 - LCMXO2\n"
           " 1 - LCMXO3\n"
           " 2 - ANLOGIC\n"
+          " 3 - YZBB\n"
           "Options:\n"
           " -h | --help                   Print this message\n"
           " -p | --program                Erase, program and verify cpld\n"

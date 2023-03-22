@@ -51,6 +51,28 @@ int lcmxo2_2000hc_cpld_program(FILE *jed_fd);
 int lcmxo2_2000hc_cpld_verify(FILE *jed_fd);
 #endif
 
-/*************************************************************************************/
-extern struct cpld_dev_info lattice_dev_list[2];
+/************************************************************************************/
+
+/* YZBB */
+#define YZBB_CPLD_SLAVE           0x11
+#define YZBB_READ_VERSION         0x00
+#define YZBB_READ_UFM_ADDR        0xCA
+#define YZBB_ENABLE_CFG           0x74
+#define YZBB_READ_STATUS          0x3C
+#define YZBB_INIT_ADRR_UFM        0x47
+#define YZBB_READ_UFM             0xCA
+#define YZBB_DISABLE_CFG          0x26
+#define YZBB_BYPASS               0xFF
+
+#define YZBB_VERSION_DATA_LENGTH  2
+#define YZBB_READ_VER_INS_LENGTH  1
+#define YZBB_READ_UFM_INS_LENGTH  4
+#define YZBB_UFM_DATA_LENGTH      16
+#define YZBB_CFG_INS_LENGTH       3
+#define YZBB_INS_LENGTH           4
+#define YZBB_READ_STATUS_LENGTH   4
+#define YZBB_UFM_DATA_LENGTH      16
+#define YZBB_DEVICEID_LENGTH      12
+
+extern struct cpld_dev_info lattice_dev_list[3];
 #endif

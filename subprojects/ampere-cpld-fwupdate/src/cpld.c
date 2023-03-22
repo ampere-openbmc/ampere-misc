@@ -17,7 +17,8 @@ struct cpld_dev_info **cpld_dev_list;
 const char *cpld_list[] = {
   "LCMXO2-Family",
   "LCMXO3-Family",
-  "ANLOGIC-Family"
+  "ANLOGIC-Family",
+  "YZBB-Family"
 };
 
 static int cpld_probe(cpld_intf_t intf, uint8_t id, cpld_intf_info_t *attr)

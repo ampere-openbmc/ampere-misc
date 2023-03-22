@@ -59,6 +59,7 @@ enum {
   LCMXO2 = 0,
   LCMXO3 = 1, //TBD. No different between LCMX03 and LCMX02
   ANLOGIC = 2,
+  YZBB = 3,
   UNKNOWN_DEV
 };
 

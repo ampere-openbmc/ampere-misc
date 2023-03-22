@@ -455,6 +455,16 @@ jed_file_parser(FILE *jed_fd, CPLDInfo *dev_info, int cf_size, int ufm_size)
 #ifdef VERBOSE_DEBUG
           printf("%x %x %x %x\n",dev_info->UFM[current_addr],dev_info->UFM[current_addr+1],dev_info->UFM[current_addr+2],dev_info->UFM[current_addr+3]);
 #endif
+          //each data has 128bits(4*unsigned int), so the for-loop need to be run 4 times
+
+          for ( i = 0; i < sizeof(unsigned int); i++ )
+          {
+            JED_CheckSum += (dev_info->UFM[current_addr+i]>>24) & 0xff;
+            JED_CheckSum += (dev_info->UFM[current_addr+i]>>16) & 0xff;
+            JED_CheckSum += (dev_info->UFM[current_addr+i]>>8)  & 0xff;
+            JED_CheckSum += (dev_info->UFM[current_addr+i])     & 0xff;
+          }
+
           dev_info->UFM_Line++;
         }
         else
@@ -884,6 +894,39 @@ jtag_cpld_checksum(FILE *jed_fd, unsigned int *crc)
       *crc += (buff[j])     & 0xff;
     }
   }
+
+  //  ast_jtag_run_test_idle(0, JTAG_STATE_TLRESET, 3);
+  ast_jtag_sir_xfer(JTAG_STATE_TLRESET, LATTICE_INS_LENGTH, LCMXO2_LSC_INIT_ADDR_UFM);
+
+  buff[0] = 0x04;
+  ast_jtag_tdi_xfer(JTAG_STATE_TLRESET, LATTICE_INS_LENGTH, &buff[0]);
+  usleep(1000);
+
+//  ast_jtag_run_test_idle(0, JTAG_STATE_TLRESET, 3);
+  ast_jtag_sir_xfer(JTAG_STATE_TLRESET, LATTICE_INS_LENGTH, LCMXO2_LSC_READ_INCR_NV);
+  usleep(1000);
+
+
+  for(i = 0; i < dev_info.UFM_Line; i++)
+  {
+    memset(buff, 0, sizeof(buff));
+    ast_jtag_tdo_xfer(JTAG_STATE_TLRESET, LATTICE_COL_SIZE, buff);
+#ifdef VERBOSE_DEBUG
+    printf("[%d] ", i);
+    for (j =0; j < 4; j++) {
+        printf("%x ", buff[j]);
+    }
+    printf("\n");
+#endif
+    for ( j = 0; j < sizeof(unsigned int); j++ )
+    {
+      *crc += (buff[j]>>24) & 0xff;
+      *crc += (buff[j]>>16) & 0xff;
+      *crc += (buff[j]>>8)  & 0xff;
+      *crc += (buff[j])     & 0xff;
+    }
+  }
+
   *crc &= 0xFFFF;
 
   ret = jtag_cpld_end();
@@ -1198,6 +1241,20 @@ error_exit:
   }
 
   return ret;
+}
+
+static int
+yzbb_jtag_cpld_get_ver(unsigned int *ver)
+{
+    UNUSED(ver);
+    return 0;
+}
+
+static int
+yzbb_jtag_cpld_get_id(unsigned int *dev_id)
+{
+    UNUSED(dev_id);
+    return 0;
 }
 
 /******************************************************************************/
@@ -1620,6 +1677,36 @@ i2c_cpld_checksum(FILE *jed_fd, unsigned int *crc)
       *crc += buff[j] & 0xff;
     }
   }
+
+  reset_addr_cmd[0] = 0x47;
+  ret = i2c_rdwr_msg_transfer(cpld.fd, cpld.slave << 1, reset_addr_cmd,
+                  sizeof(reset_addr_cmd), NULL, 0);
+  if (ret != 0) {
+    ERR_PRINT("i2c_cpld_checksum(): Reset Page Address");
+    return ret;
+  }
+
+  for(i = 0; i < dev_info.UFM_Line; i++)
+  {
+    memset(buff, 0, sizeof(buff));
+    ret = i2c_rdwr_msg_transfer(cpld.fd, cpld.slave << 1, read_page_cmd,
+              sizeof(read_page_cmd), buff, sizeof(buff));
+    if (ret != 0) {
+      ERR_PRINT("i2c_cpld_checksum(): Read Data fail");
+      return ret;
+    }
+#ifdef VERBOSE_DEBUG
+    printf("[%d] ", i);
+    for (j =0; j < 16; j++) {
+        printf("%x ", buff[j]);
+    }
+    printf("\n");
+#endif
+    swap_bit_byte(buff, 16);
+    for (j =0; j < 16; j++) {
+      *crc += buff[j] & 0xff;
+    }
+  }
   *crc &= 0xFFFF;
 
   ret = i2c_cpld_end();
@@ -1953,6 +2040,122 @@ error_exit:
   return ret;
 }
 
+static int
+yzbb_i2c_cpld_get_ver(unsigned int *ver)
+{
+    uint8_t cmd[YZBB_READ_VER_INS_LENGTH] = {YZBB_READ_VERSION};
+    uint8_t dr_data[YZBB_VERSION_DATA_LENGTH];
+    int ret = -1;
+
+    ret = i2c_rdwr_msg_transfer(cpld.fd, YZBB_CPLD_SLAVE << 1, (uint8_t *) &cmd,
+                                YZBB_READ_VER_INS_LENGTH, (uint8_t *) &dr_data,
+                                YZBB_VERSION_DATA_LENGTH);
+    if (ret != 0) {
+      printf("read_device_id() failed\n");
+      return ret;
+    }
+#ifdef DEBUG
+    printf("Version = ");
+    for (int i = 0; i < YZBB_VERSION_DATA_LENGTH; i++ )
+    {
+        printf(" 0x%X ", dr_data[i]);
+    }
+    printf("\n");
+#endif
+    /* Byte 1 is version */
+    *ver = dr_data[1] & 0xFF;
+   printf("CPLD Version: %02X\n", *ver);
+
+    return 0;
+}
+
+static int
+yzbb_i2c_cpld_get_id(unsigned int *dev_id)
+{
+    /* Get the ID in the UFM sector (address 0xCA).
+     * All YZBB CPLDs need to support this field. */
+    uint8_t en_cfg_cmd[YZBB_CFG_INS_LENGTH] = {YZBB_ENABLE_CFG, 0x08, 0x00};
+    uint8_t dis_cfg_cmd[YZBB_CFG_INS_LENGTH] = {YZBB_DISABLE_CFG, 0x00, 0x00};
+    uint8_t status_cmd[YZBB_INS_LENGTH] = {YZBB_READ_STATUS, 0x00, 0x00, 0x00};
+    uint8_t init_ufm_cmd[YZBB_INS_LENGTH] = {YZBB_INIT_ADRR_UFM, 0x00, 0x00, 0x00};
+    uint8_t ufm_cmd[YZBB_READ_UFM_INS_LENGTH] = {YZBB_READ_UFM_ADDR, 0x00, 0x00, 0x00};
+    uint8_t bypass_cmd[YZBB_INS_LENGTH] = {YZBB_BYPASS, 0x00, 0x00, 0x00};
+    uint8_t ufm_data[YZBB_UFM_DATA_LENGTH];
+    uint8_t st_data[YZBB_READ_STATUS_LENGTH];
+
+    int ret = -1;
+
+    ret = i2c_rdwr_msg_transfer(cpld.fd, cpld.slave << 1, en_cfg_cmd,
+                            sizeof(en_cfg_cmd), NULL, 0);
+    if (ret != 0) {
+      printf("read_device_id() Enable Configuration Interface failed\n");
+      return ret;
+    }
+    // Delay 10ms
+    usleep(10000);
+    // Check the configuration status
+    ret = i2c_rdwr_msg_transfer(cpld.fd, cpld.slave << 1, status_cmd,
+                            sizeof(status_cmd), st_data, sizeof(st_data));
+    if (ret != 0) {
+      printf("read_device_id() configuration status failed\n");
+      return ret;
+    }
+    unsigned int tmp = byte_to_int(st_data);
+    if ((tmp & 0x00003000) != 0)
+    {
+        printf("read_device_id() wrong status\n");
+        return -1;
+    }
+    // Init UFM address
+    ret = i2c_rdwr_msg_transfer(cpld.fd, cpld.slave << 1, init_ufm_cmd,
+                            sizeof(init_ufm_cmd), NULL, 0);
+    if (ret != 0) {
+      printf("read_device_id() Init UFM address failed\n");
+      return ret;
+    }
+    usleep(1000);
+    // Get ID in the UFM sector
+    ret = i2c_rdwr_msg_transfer(cpld.fd, cpld.slave << 1, ufm_cmd,
+                            sizeof(ufm_cmd), ufm_data, sizeof(ufm_data));
+    if (ret != 0) {
+      printf("read_device_id() Get ID in the UFM sector failed\n");
+      return ret;
+    }
+#ifdef DEBUG
+    printf("Device ID = ");
+    for (int i = 0; i < YZBB_UFM_DATA_LENGTH; i++ )
+    {
+        printf(" 0x%X ", ufm_data[i]);
+    }
+    printf("\n");
+#endif
+
+    // The ID is byte 2 to byte 12
+    memcpy(dev_id, &ufm_data[1], YZBB_DEVICEID_LENGTH);
+    printf("CPLD DeviceID: ");
+    for (int i = 1; i < YZBB_DEVICEID_LENGTH + 1; i++ ) {
+        printf(" %02X ", ufm_data[i]);
+    }
+    printf("\n");
+
+    // Disable Configuration Interface
+    ret = i2c_rdwr_msg_transfer(cpld.fd, cpld.slave << 1, dis_cfg_cmd,
+                            sizeof(dis_cfg_cmd), NULL, 0);
+    if (ret != 0) {
+      printf("read_device_id() Disable Configuration Interface failed\n");
+      return ret;
+    }
+    // Send Bypass
+    ret = i2c_rdwr_msg_transfer(cpld.fd, cpld.slave << 1, bypass_cmd,
+                            sizeof(bypass_cmd), NULL, 0);
+    if (ret != 0) {
+      printf("read_device_id() Send Bypass failed\n");
+      return ret;
+    }
+
+    return 0;
+}
+
 /******************************************************************************/
 /***************************      Common       ********************************/
 /******************************************************************************/
@@ -2028,6 +2231,20 @@ LCMXO2Family_cpld_dev_close(cpld_intf_t intf)
   return 0;
 }
 
+static int
+YZBBFamily_cpld_get_ver(unsigned int *ver)
+{
+  return (cpld.intf == INTF_JTAG) ? yzbb_jtag_cpld_get_ver(ver):
+                                    yzbb_i2c_cpld_get_ver(ver);
+}
+
+static int
+YZBBFamily_cpld_get_id(unsigned int *dev_id)
+{
+  return (cpld.intf == INTF_JTAG) ? yzbb_jtag_cpld_get_id(dev_id):
+                                    yzbb_i2c_cpld_get_id(dev_id);
+}
+
 /******************************************************************************/
 struct cpld_dev_info lattice_dev_list[] = {
   [0] = {
@@ -2047,7 +2264,16 @@ struct cpld_dev_info lattice_dev_list[] = {
     .cpld_program = LCMXO2Family_cpld_update,
     .cpld_dev_id = LCMXO2Family_cpld_get_id,
     .cpld_checksum = LCMXO2Family_cpld_checksum,
-  }
+  },
+  [2] = {
+    .name = "YZBB-Family",
+    .cpld_open = LCMXO2Family_cpld_dev_open,
+    .cpld_close = LCMXO2Family_cpld_dev_close,
+    .cpld_ver = YZBBFamily_cpld_get_ver,
+    .cpld_program = LCMXO2Family_cpld_update,
+    .cpld_dev_id = YZBBFamily_cpld_get_id,
+    .cpld_checksum = LCMXO2Family_cpld_checksum,
+  },
 };
 
 

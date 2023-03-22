@@ -35,6 +35,7 @@ static void usage(FILE *fp, char **argv)
           " 0 - LCMXO2\n"
           " 1 - LCMXO3\n"
           " 2 - ANLOGIC\n"
+          " 3 - YZBB\n"
           "Jtag Device: Default is jtag0\n"
           " 0 - /dev/jtag0\n"
           " 1 - /dev/jtag1\n"
