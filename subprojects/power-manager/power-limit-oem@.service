@@ -1,8 +1,0 @@
-[Unit]
-Description= Execute Power Limit OEM%i exception action
-Wants=obmc-mapper.target
-After=obmc-mapper.target
-
-[Service]
-ExecStart=/usr/sbin/power_limit_oem.sh %i
-Type=simple

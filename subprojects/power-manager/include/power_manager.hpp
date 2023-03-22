@@ -1,6 +1,6 @@
 #pragma once
 
-#include "power_limit_interface.hpp"
+#include "power_cap_interface.hpp"
 
 namespace phosphor
 {
@@ -10,7 +10,7 @@ namespace Power
 {
 namespace Manager
 {
-using powerLimitClass = phosphor::Control::Power::Limit::PowerLimit;
+using powerCapClass = phosphor::Control::Power::Cap::PowerCap;
 class PowerManager
 {
   public:
@@ -27,8 +27,8 @@ class PowerManager
         objectPath(path)
     {
         parsePowerManagerCfg();
-        limitObject = std::make_unique<powerLimitClass>(
-            bus, (std::string(path) + "/limit").c_str(), event, totalPwrSrv,
+        capObject = std::make_unique<powerCapClass>(
+            bus, (std::string(path) + "/cap").c_str(), event, totalPwrSrv,
             totalPwrObjectPath, totalPwrItf);
     }
 
@@ -39,7 +39,7 @@ class PowerManager
     /** @brief object path */
     std::string objectPath;
 
-    std::unique_ptr<powerLimitClass> limitObject = nullptr;
+    std::unique_ptr<powerCapClass> capObject = nullptr;
 
     const char* powerCfgJsonFile =
         "/usr/share/power-manager/power-manager-cfg.json";

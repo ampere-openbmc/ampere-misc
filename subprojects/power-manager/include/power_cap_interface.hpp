@@ -8,13 +8,13 @@
 #include <sdeventplus/event.hpp>
 #include <sdeventplus/utility/timer.hpp>
 #include <xyz/openbmc_project/Common/error.hpp>
-#include <xyz/openbmc_project/Control/Power/Limit/server.hpp>
+#include <xyz/openbmc_project/Control/Power/Cap/server.hpp>
 
 #include <chrono>
 
-using LimitClass =
-    sdbusplus::xyz::openbmc_project::Control::Power::server::Limit;
-using LimitItf = sdbusplus::server::object_t<LimitClass>;
+using CapClass =
+    sdbusplus::xyz::openbmc_project::Control::Power::server::Cap;
+using CapItf = sdbusplus::server::object_t<CapClass>;
 
 namespace phosphor
 {
@@ -22,56 +22,56 @@ namespace Control
 {
 namespace Power
 {
-namespace Limit
+namespace Cap
 {
-class PowerLimit : public LimitItf
+class PowerCap : public CapItf
 {
   public:
-    PowerLimit() = delete;
-    PowerLimit(const PowerLimit&) = delete;
-    PowerLimit& operator=(const PowerLimit&) = delete;
-    PowerLimit(PowerLimit&&) = delete;
-    PowerLimit& operator=(PowerLimit&&) = delete;
-    virtual ~PowerLimit() = default;
+    PowerCap() = delete;
+    PowerCap(const PowerCap&) = delete;
+    PowerCap& operator=(const PowerCap&) = delete;
+    PowerCap(PowerCap&&) = delete;
+    PowerCap& operator=(PowerCap&&) = delete;
+    virtual ~PowerCap() = default;
 
     /*  @brief Constructor to put object onto bus at a dbus path.
      *  @param[in] bus - sdbusplus D-Bus to attach to.
      *  @param[in] path - Path to attach to.
      */
-    PowerLimit(sdbusplus::bus_t& bus, const char* path,
+    PowerCap(sdbusplus::bus_t& bus, const char* path,
                const sdeventplus::Event& event, std::string totalPwrSrv,
                std::string totalPwrObjectPath, std::string totalPwrItf);
 
-    /*  @brief Request to set the Active property of the interface.
-     *  @param[in] value - the value of Active property.
-     *  @return - The active property of the interface.
+    /*  @brief Request to set the Enable property of the interface.
+     *  @param[in] value - the value of Enable property.
+     *  @return - The Enable property of the interface.
      */
-    bool active(bool value) override;
+    bool powerCapEnable(bool value) override;
 
-    /*  @brief Request to set the power limt property of the interface.
-     *  @param[in] value - the value of power limit property.
-     *  @return - The power limit property of the interface.
+    /*  @brief Request to set the power Cap property of the interface.
+     *  @param[in] value - the value of power Cap property.
+     *  @return - The power Cap property of the interface.
      */
-    uint16_t powerLimit(uint16_t value) override;
+    uint32_t powerCap(uint32_t value) override;
 
     /*  @brief Request to set the exception action property of the interface.
      *  @param[in] value - the value of exception action property.
      *  @return - The exception action property of the interface.
      */
-    LimitClass::ExceptionActions
+    CapClass::ExceptionActions
         exceptionAction(ExceptionActions value) override;
 
     /*  @brief Request to set the Correction Time property of the interface.
      *  @param[in] value - the value of Correction Time property.
      *  @return - The Correction Time property of the interface.
      */
-    uint32_t correctionTime(uint32_t value) override;
+    uint64_t correctionTime(uint64_t value) override;
 
     /*  @brief Request to set the Sampling Periodic property of the interface.
      *  @param[in] value - the value of Sampling Periodic property.
      *  @return - The Sampling Periodic property of the interface.
      */
-    uint16_t samplingPeriod(uint16_t value) override;
+    uint64_t samplingPeriod(uint64_t value) override;
 
   private:
     /** @brief sdbus handle */
@@ -86,8 +86,8 @@ class PowerLimit : public LimitItf
     std::string totalPwrObjectPath;
     std::string totalPwrItf;
 
-    /** @brief minimun sampling periodic in seconds */
-    const uint16_t minSamplPeriod = 1;
+    /** @brief minimun sampling periodic in microseconds */
+    const uint64_t minSamplPeriod = 1000000;
 
     /** @brief timer event */
     const sdeventplus::Event& event;
@@ -95,11 +95,11 @@ class PowerLimit : public LimitItf
     /** @brief struct to store old configuration */
     typedef struct
     {
-        bool actFlag;
-        LimitClass::ExceptionActions exceptAct;
-        uint16_t powerLimit;
-        uint32_t correctTime;
-        uint16_t samplePeriod;
+        bool enableFlag;
+        CapClass::ExceptionActions exceptAct;
+        uint32_t powerCap;
+        uint64_t correctTime;
+        uint64_t samplePeriod;
     } paramsCfg;
 
     /** @brief the current configuration */
@@ -107,7 +107,7 @@ class PowerLimit : public LimitItf
 
     /** @brief the file to store old configuration */
     std::string oldParametersCfgFile =
-        "/usr/share/power-manager/powerLimit.cfg";
+        "/usr/share/power-manager/powerCap.cfg";
 
     /** @brief the correction timer */
     sdeventplus::utility::Timer<sdeventplus::ClockId::Monotonic> correctTimer;
@@ -136,7 +136,7 @@ class PowerLimit : public LimitItf
     /** @brief the function to handle OEM exception action */
     void handleOEMExceptionAction();
 };
-} // namespace Limit
+} // namespace Cap
 } // namespace Power
 } // namespace Control
 } // namespace phosphor

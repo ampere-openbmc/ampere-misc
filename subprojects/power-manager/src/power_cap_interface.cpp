@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "power_limit_interface.hpp"
+#include "power_cap_interface.hpp"
 
 #include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/lg2.hpp>
@@ -32,22 +32,22 @@ namespace Control
 {
 namespace Power
 {
-namespace Limit
+namespace Cap
 {
 
 PHOSPHOR_LOG2_USING;
 using namespace phosphor::logging;
 using namespace sdbusplus::xyz::openbmc_project::Common::Error;
 
-PowerLimit::PowerLimit(sdbusplus::bus_t& bus, const char* path,
+PowerCap::PowerCap(sdbusplus::bus_t& bus, const char* path,
                        const sdeventplus::Event& event, std::string totalPwrSrv,
                        std::string totalPwrObjectPath,
                        std::string totalPwrItf) :
-    LimitItf(bus, path),
+    CapItf(bus, path),
     bus(bus), objectPath(path), event(event), totalPwrSrv(totalPwrSrv),
     totalPwrObjectPath(totalPwrObjectPath), totalPwrItf(totalPwrItf),
-    correctTimer(event, std::bind(&PowerLimit::callBackCorrectTimer, this)),
-    samplingTimer(event, std::bind(&PowerLimit::callBackSamplingTimer, this))
+    correctTimer(event, std::bind(&PowerCap::callBackCorrectTimer, this)),
+    samplingTimer(event, std::bind(&PowerCap::callBackSamplingTimer, this))
 {
     std::ifstream oldCfgFile(oldParametersCfgFile.c_str(),
                              std::ios::in | std::ios::binary);
@@ -58,41 +58,41 @@ PowerLimit::PowerLimit(sdbusplus::bus_t& bus, const char* path,
     if (oldCfgFile.is_open())
     {
         oldCfgFile.read((char*)(&currentCfg), sizeof(paramsCfg));
-        active(currentCfg.actFlag);
+        powerCapEnable(currentCfg.enableFlag);
         exceptionAction(currentCfg.exceptAct);
-        powerLimit(currentCfg.powerLimit);
+        powerCap(currentCfg.powerCap);
         correctionTime(currentCfg.correctTime);
         samplingPeriod(currentCfg.samplePeriod);
     }
     else
     {
-        currentCfg.actFlag = LimitItf::active();
-        currentCfg.exceptAct = LimitItf::exceptionAction();
-        currentCfg.powerLimit = LimitItf::powerLimit();
-        currentCfg.correctTime = LimitItf::correctionTime();
-        currentCfg.samplePeriod = LimitItf::samplingPeriod();
+        currentCfg.enableFlag = CapItf::powerCapEnable();
+        currentCfg.exceptAct = CapItf::exceptionAction();
+        currentCfg.powerCap = CapItf::powerCap();
+        currentCfg.correctTime = CapItf::correctionTime();
+        currentCfg.samplePeriod = CapItf::samplingPeriod();
     }
     oldCfgFile.close();
 }
 
-bool PowerLimit::active(bool value)
+bool PowerCap::powerCapEnable(bool value)
 {
-    // Get current active status
-    bool currentAct = LimitItf::active();
+    // Get current Enable status
+    bool currentAct = CapItf::powerCapEnable();
 
     /*
-     * The sampling timer should be enabled only the active state is changed
-     * from "false" to "true"
+     * The sampling timer should be enabled only the Enable state is
+     * changed from "false" to "true"
      */
     if (true == value && value != currentAct)
     {
         /*
          * Enable sampling timer
          */
-        uint16_t samplePeriod = LimitItf::samplingPeriod();
+        uint64_t samplePeriod = CapItf::samplingPeriod();
         samplePeriod =
             (samplePeriod < minSamplPeriod) ? minSamplPeriod : samplePeriod;
-        samplingTimer.restart(std::chrono::seconds(samplePeriod));
+        samplingTimer.restart(std::chrono::microseconds(samplePeriod));
     }
     else if (false == value && value != currentAct)
     {
@@ -103,69 +103,69 @@ bool PowerLimit::active(bool value)
         correctTimer.restart(std::nullopt);
     }
 
-    currentCfg.actFlag = value;
+    currentCfg.enableFlag = value;
     writeCurrentCfg();
 
-    return LimitItf::active(value, false);
+    return CapItf::powerCapEnable(value, false);
 }
 
-uint16_t PowerLimit::powerLimit(uint16_t value)
+uint32_t PowerCap::powerCap(uint32_t value)
 {
-    currentCfg.powerLimit = value;
+    currentCfg.powerCap = value;
     writeCurrentCfg();
 
-    return LimitItf::powerLimit(value, false);
+    return CapItf::powerCap(value, false);
 }
 
-LimitClass::ExceptionActions PowerLimit::exceptionAction(ExceptionActions value)
+CapClass::ExceptionActions PowerCap::exceptionAction(ExceptionActions value)
 {
     currentCfg.exceptAct = value;
     writeCurrentCfg();
 
-    return LimitItf::exceptionAction(value, false);
+    return CapItf::exceptionAction(value, false);
 }
 
-uint32_t PowerLimit::correctionTime(uint32_t value)
+uint64_t PowerCap::correctionTime(uint64_t value)
 {
     currentCfg.correctTime = value;
     writeCurrentCfg();
 
-    return LimitItf::correctionTime(value, false);
+    return CapItf::correctionTime(value, false);
 }
 
-uint16_t PowerLimit::samplingPeriod(uint16_t value)
+uint64_t PowerCap::samplingPeriod(uint64_t value)
 {
     value = (value < minSamplPeriod) ? minSamplPeriod : value;
-    samplingTimer.setInterval(std::chrono::seconds(value));
+    samplingTimer.setInterval(std::chrono::microseconds(value));
 
     currentCfg.samplePeriod = value;
     writeCurrentCfg();
 
-    return LimitItf::samplingPeriod(value, false);
+    return CapItf::samplingPeriod(value, false);
 }
 
-void PowerLimit::callBackCorrectTimer()
+void PowerCap::callBackCorrectTimer()
 {
-    LimitClass::ExceptionActions currentExcepAct = LimitItf::exceptionAction();
+    CapClass::ExceptionActions currentExcepAct = CapItf::exceptionAction();
 
     switch (currentExcepAct)
     {
-        case LimitClass::ExceptionActions::NoAction:
+        case CapClass::ExceptionActions::NoAction:
             break;
-        case LimitClass::ExceptionActions::HardPowerOff:
+        case CapClass::ExceptionActions::HardPowerOff:
         {
             // Turn power off and log to SEL
             turnHardPowerOff();
             logSELEvent(true);
             break;
         }
-        case LimitClass::ExceptionActions::SELLog:
+        case CapClass::ExceptionActions::LogEventOnly:
         {
             // Log to SEL
             logSELEvent(true);
             break;
         }
-        default:
+        case CapClass::ExceptionActions::Oem:
         {
             // OEM action - call the service which handle OEM action
             handleOEMExceptionAction();
@@ -174,11 +174,11 @@ void PowerLimit::callBackCorrectTimer()
     }
 }
 
-void PowerLimit::callBackSamplingTimer()
+void PowerCap::callBackSamplingTimer()
 {
     /*
      * If the service which stores total power consumption is valid
-     * then compare the power limit and total power consumption
+     * then compare the power cap and total power consumption
      */
     if (!totalPwrSrv.empty() && !totalPwrObjectPath.empty() &&
         !totalPwrItf.empty())
@@ -196,24 +196,24 @@ void PowerLimit::callBackSamplingTimer()
         {
             std::variant<double> totalPowerVal = 0.0;
             auto response = bus.call(method);
-            uint16_t powerLimit = LimitItf::powerLimit();
+            uint32_t powerCap = CapItf::powerCap();
 
             response.read(totalPowerVal);
 
             /*
-             * If the total power consumption is greater than power limit then
+             * If the total power consumption is greater than power cap then
              * trigger one shot correction timer.
              */
-            if (((uint16_t)(std::get<double>(totalPowerVal))) >= powerLimit)
+            if (((uint32_t)(std::get<double>(totalPowerVal))) >= powerCap)
             {
                 if (!correctTimer.isEnabled() && !correctTimer.hasExpired())
                 {
                     /*
                      * Enable correction timer
                      */
-                    uint32_t correctTime = LimitItf::correctionTime();
+                    uint64_t correctTime = CapItf::correctionTime();
                     correctTimer.restartOnce(
-                        std::chrono::milliseconds(correctTime));
+                        std::chrono::microseconds(correctTime));
                 }
             }
             else
@@ -225,7 +225,7 @@ void PowerLimit::callBackSamplingTimer()
 
                 /*
                  * Disable correction timer when total power is lower than power
-                 * limit
+                 * cap
                  */
                 correctTimer.restart(std::nullopt);
             }
@@ -237,7 +237,7 @@ void PowerLimit::callBackSamplingTimer()
     }
 }
 
-void PowerLimit::writeCurrentCfg()
+void PowerCap::writeCurrentCfg()
 {
     std::ofstream oldCfgFile(oldParametersCfgFile.c_str(),
                              std::ios::out | std::ios::binary);
@@ -248,7 +248,7 @@ void PowerLimit::writeCurrentCfg()
     oldCfgFile.close();
 }
 
-void PowerLimit::logSELEvent(bool assertFlg)
+void PowerCap::logSELEvent(bool assertFlg)
 {
     constexpr auto ipmiLoggingService = "xyz.openbmc_project.Logging.IPMI";
     constexpr auto ipmiLoggingObjectPath = "/xyz/openbmc_project/Logging/IPMI";
@@ -272,7 +272,7 @@ void PowerLimit::logSELEvent(bool assertFlg)
     bus.call_noreply(method);
 }
 
-void PowerLimit::turnHardPowerOff()
+void PowerCap::turnHardPowerOff()
 {
     constexpr auto chassisStateServer = "xyz.openbmc_project.State.Chassis";
     constexpr auto chassisStateObjectPath =
@@ -291,22 +291,16 @@ void PowerLimit::turnHardPowerOff()
     bus.call_noreply(method);
 }
 
-void PowerLimit::handleOEMExceptionAction()
+void PowerCap::handleOEMExceptionAction()
 {
     constexpr auto SYSTEMD_SERVICE = "org.freedesktop.systemd1";
     constexpr auto SYSTEMD_OBJ_PATH = "/org/freedesktop/systemd1";
     constexpr auto SYSTEMD_INTERFACE = "org.freedesktop.systemd1.Manager";
+    constexpr auto oemActionService = "power-cap-action-oem.service";
 
-    std::stringstream serviceStream;
     auto method = bus.new_method_call(SYSTEMD_SERVICE, SYSTEMD_OBJ_PATH,
                                     SYSTEMD_INTERFACE, "StartUnit");
-    auto exceptAction = (uint32_t)LimitItf::exceptionAction();
-
-    serviceStream << "power-limit-oem@" << std::setfill ('0') <<
-                     std::setw(sizeof(uint8_t) * 2) << std::hex <<
-                     exceptAction << ".service";
-
-    method.append(serviceStream.str(), "replace");
+    method.append(oemActionService, "replace");
 
     try
     {
@@ -314,11 +308,11 @@ void PowerLimit::handleOEMExceptionAction()
     }
     catch (const sdbusplus::exception_t& e)
     {
-        error("Error occur when call power-limit-oem@.service");
+        error("Error occur when call power-cap-action-oem.service");
     }
 }
 
-} // namespace Limit
+} // namespace Cap
 } // namespace Power
 } // namespace Control
 } // namespace phosphor

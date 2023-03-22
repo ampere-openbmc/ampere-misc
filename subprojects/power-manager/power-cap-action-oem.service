@@ -1,0 +1,6 @@
+[Unit]
+Description= Execute Power Limit OEM exception action
+
+[Service]
+ExecStart=echo "Dummy oem exception action"
+Type=simple
