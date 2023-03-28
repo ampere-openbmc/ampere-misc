@@ -92,6 +92,10 @@ class PowerCap : public CapItf
     /** @brief timer event */
     const sdeventplus::Event& event;
 
+    // TODO: move the power actions to utils files.
+    /** @brief current total power consumption */
+    uint32_t currentPower;
+
     /** @brief struct to store old configuration */
     typedef struct
     {
@@ -123,12 +127,12 @@ class PowerCap : public CapItf
     /** @brief the function to store current configuration */
     void writeCurrentCfg();
 
-    /** @brief the function to log SEL event
+    /** @brief the function to log power limit event
      *  @param[in] assertFlg - Direction of event
      *                         true: Total power exceed the limit
      *                         false: Total power non-exceed the limit
      */
-    void logSELEvent(bool assertFlg);
+    void logPowerLimitEvent(bool assertFlg);
 
     /** @brief the function to turn off the power */
     void turnHardPowerOff();

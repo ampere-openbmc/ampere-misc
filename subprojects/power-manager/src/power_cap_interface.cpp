@@ -154,15 +154,15 @@ void PowerCap::callBackCorrectTimer()
             break;
         case CapClass::ExceptionActions::HardPowerOff:
         {
-            // Turn power off and log to SEL
+            // Turn power off and log the event to Redfish
             turnHardPowerOff();
-            logSELEvent(true);
+            logPowerLimitEvent(true);
             break;
         }
         case CapClass::ExceptionActions::LogEventOnly:
         {
-            // Log to SEL
-            logSELEvent(true);
+            // Log the event to Redfish
+            logPowerLimitEvent(true);
             break;
         }
         case CapClass::ExceptionActions::Oem:
@@ -199,6 +199,7 @@ void PowerCap::callBackSamplingTimer()
             uint32_t powerCap = CapItf::powerCap();
 
             response.read(totalPowerVal);
+            currentPower = (uint32_t)(std::get<double>(totalPowerVal));
 
             /*
              * If the total power consumption is greater than power cap then
@@ -220,7 +221,7 @@ void PowerCap::callBackSamplingTimer()
             {
                 if (correctTimer.hasExpired())
                 {
-                    logSELEvent(false);
+                    logPowerLimitEvent(false);
                 }
 
                 /*
@@ -248,28 +249,27 @@ void PowerCap::writeCurrentCfg()
     oldCfgFile.close();
 }
 
-void PowerCap::logSELEvent(bool assertFlg)
+void PowerCap::logPowerLimitEvent(bool assertFlg)
 {
-    constexpr auto ipmiLoggingService = "xyz.openbmc_project.Logging.IPMI";
-    constexpr auto ipmiLoggingObjectPath = "/xyz/openbmc_project/Logging/IPMI";
-    constexpr auto ipmiLoggingItf = "xyz.openbmc_project.Logging.IPMI";
-    // Indicate that event is: Upper Non-recoverable - going high
-    // TODO: update the event to "Limit Exceeded"/"Limit No Exceeded"
-    std::vector<uint8_t> evtData = {0x0B, 0xFF, 0xFF};
-    uint16_t genID = 0x20;
-    auto method = bus.new_method_call(ipmiLoggingService, ipmiLoggingObjectPath,
-                                      ipmiLoggingItf, "IpmiSelAdd");
-    std::string selMsg = (true == assertFlg) ?
-                            "The current power greater than the limit" :
-                            "The current power lower than the limit";
+    std::string redfishMsgId;
+    std::string message;
+    uint32_t powerCap = CapItf::powerCap();
+    std::string msgArgs = std::to_string(currentPower) + "," +
+                            std::to_string(powerCap);
 
-    method.append(selMsg.c_str());
-    method.append(totalPwrObjectPath.c_str());
-    method.append(evtData);
-    method.append(assertFlg);
-    method.append(genID);
+    if (true == assertFlg)
+    {
+        redfishMsgId = "OpenBMC.0.1.TotalPowerConsumptionExceedTheLimit";
+        message = "Limit Exceeded";
+    }
+    else
+    {
+        redfishMsgId = "OpenBMC.0.1.TotalPowerConsumptionDropBelowTheLimit";
+        message = "Limit No Exceeded";
+    }
 
-    bus.call_noreply(method);
+    lg2::info(message.c_str(), "REDFISH_MESSAGE_ID", redfishMsgId.c_str(),
+            "REDFISH_MESSAGE_ARGS", msgArgs.c_str());
 }
 
 void PowerCap::turnHardPowerOff()
