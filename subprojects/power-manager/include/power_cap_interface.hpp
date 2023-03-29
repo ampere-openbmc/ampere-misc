@@ -139,6 +139,14 @@ class PowerCap : public CapItf
 
     /** @brief the function to handle OEM exception action */
     void handleOEMExceptionAction();
+
+    /** @brief the function to notify the total power consumption exceeds
+     *         the power cap */
+    void notifyTotalPowerExceedPowerCap();
+
+    /** @brief the function to notify the total power consumption drops below
+     *         power cap */
+    void notifyTotalPowerDropBelowPowerCap();
 };
 } // namespace Cap
 } // namespace Power

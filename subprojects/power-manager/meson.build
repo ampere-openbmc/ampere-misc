@@ -27,24 +27,11 @@ executable(
     install_dir: get_option('sbindir')
 )
 
-uint_files = [
-    'xyz.openbmc_project.power.manager.service',
-    'power-cap-action-oem.service',
-]
-
 systemd = dependency('systemd')
 conf_data = configuration_data()
 conf_data.set('sbindir', get_option('prefix') / get_option('sbindir'))
 
-foreach file : uint_files
-    configure_file(
-        input: file,
-        output: file,
-        configuration: conf_data,
-        install: true,
-        install_dir: systemd.get_pkgconfig_variable('systemdsystemunitdir')
-    )
-endforeach
+subdir('service')
 
 share_power_manager_folder = get_option('datadir') / 'power-manager'
 install_emptydir(share_power_manager_folder)

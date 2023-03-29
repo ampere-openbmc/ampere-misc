@@ -1,0 +1,7 @@
+[Unit]
+Description= Notify that total power consumption drops below the setting power cap
+Conflicts=power-cap-exceeds-limit.service
+
+[Service]
+ExecStart=echo "Total power consumption drops below the setting power cap"
+Type=oneshot

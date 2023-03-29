@@ -39,6 +39,10 @@ PHOSPHOR_LOG2_USING;
 using namespace phosphor::logging;
 using namespace sdbusplus::xyz::openbmc_project::Common::Error;
 
+constexpr auto SYSTEMD_SERVICE = "org.freedesktop.systemd1";
+constexpr auto SYSTEMD_OBJ_PATH = "/org/freedesktop/systemd1";
+constexpr auto SYSTEMD_INTERFACE = "org.freedesktop.systemd1.Manager";
+
 PowerCap::PowerCap(sdbusplus::bus_t& bus, const char* path,
                        const sdeventplus::Event& event, std::string totalPwrSrv,
                        std::string totalPwrObjectPath,
@@ -172,6 +176,8 @@ void PowerCap::callBackCorrectTimer()
             break;
         }
     }
+
+    notifyTotalPowerExceedPowerCap();
 }
 
 void PowerCap::callBackSamplingTimer()
@@ -221,7 +227,17 @@ void PowerCap::callBackSamplingTimer()
             {
                 if (correctTimer.hasExpired())
                 {
-                    logPowerLimitEvent(false);
+                    auto currentExcepAct = CapItf::exceptionAction();
+
+                    if ((currentExcepAct ==
+                                CapClass::ExceptionActions::HardPowerOff) ||
+                        (currentExcepAct ==
+                                CapClass::ExceptionActions::LogEventOnly))
+                    {
+                        logPowerLimitEvent(false);    
+                    }
+
+                    notifyTotalPowerDropBelowPowerCap();
                 }
 
                 /*
@@ -293,9 +309,6 @@ void PowerCap::turnHardPowerOff()
 
 void PowerCap::handleOEMExceptionAction()
 {
-    constexpr auto SYSTEMD_SERVICE = "org.freedesktop.systemd1";
-    constexpr auto SYSTEMD_OBJ_PATH = "/org/freedesktop/systemd1";
-    constexpr auto SYSTEMD_INTERFACE = "org.freedesktop.systemd1.Manager";
     constexpr auto oemActionService = "power-cap-action-oem.service";
 
     auto method = bus.new_method_call(SYSTEMD_SERVICE, SYSTEMD_OBJ_PATH,
@@ -309,6 +322,42 @@ void PowerCap::handleOEMExceptionAction()
     catch (const sdbusplus::exception_t& e)
     {
         error("Error occur when call power-cap-action-oem.service");
+    }
+}
+
+void PowerCap::notifyTotalPowerExceedPowerCap()
+{
+    constexpr auto exceedService = "power-cap-exceeds-limit.service";
+
+    auto method = bus.new_method_call(SYSTEMD_SERVICE, SYSTEMD_OBJ_PATH,
+                                    SYSTEMD_INTERFACE, "StartUnit");
+    method.append(exceedService, "replace");
+
+    try
+    {
+        bus.call_noreply(method);
+    }
+    catch (const sdbusplus::exception_t& e)
+    {
+        error("Error occur when call power-cap-exceeds-limit.service");
+    }
+}
+
+void PowerCap::notifyTotalPowerDropBelowPowerCap()
+{
+    constexpr auto dropBelowService = "power-cap-drops-below-limit.service";
+
+    auto method = bus.new_method_call(SYSTEMD_SERVICE, SYSTEMD_OBJ_PATH,
+                                    SYSTEMD_INTERFACE, "StartUnit");
+    method.append(dropBelowService, "replace");
+
+    try
+    {
+        bus.call_noreply(method);
+    }
+    catch (const sdbusplus::exception_t& e)
+    {
+        error("Error occur when call power-cap-drops-below-limit.service");
     }
 }
 
