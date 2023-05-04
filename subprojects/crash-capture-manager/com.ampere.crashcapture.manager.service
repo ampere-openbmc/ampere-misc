@@ -1,0 +1,13 @@
+[Unit]
+Description= Crash Capture Management
+Wants=xyz.openbmc_project.State.Host@0.service
+After=xyz.openbmc_project.State.Host@0.service
+
+[Service]
+ExecStart=@bindir@/crash-capture-manager
+Type=dbus
+BusName=com.ampere.CrashCapture.Trigger
+SyslogIdentifier=crash-capture-manager
+
+[Install]
+WantedBy=multi-user.target

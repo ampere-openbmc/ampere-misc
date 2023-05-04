@@ -44,3 +44,8 @@ build_power_manager = get_option('power-manager')
 if build_power_manager.enabled()
     subproject('power-manager')
 endif
+
+build_crash_capture_manager = get_option('crash-capture-manager')
+if build_crash_capture_manager.enabled()
+    subproject('crash-capture-manager')
+endif

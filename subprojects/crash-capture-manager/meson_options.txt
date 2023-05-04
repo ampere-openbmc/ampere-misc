@@ -1,0 +1,8 @@
+# RAS configuration
+option('ampere-bert-hoston-timer', type: 'integer', min: 1000, max: 20000, description: 'The amount of time a BMC need to wait to make sure host send boot event to BMC in milliseconds', value: 10000)
+option('ampere-bert-hostfail-timer', type: 'integer', min: 60000, max: 180000, description: 'The amount of time a BMC need to wait to make sure host boot fail in milliseconds', value: 120000)
+option('ampere-bert-claim-spi-timer', type: 'integer', min: 100, max: 1000, description: 'The amount of time a BMC can claim the SPI in milliseconds', value: 500)
+option('ampere-handshake-spi-script', type : 'string', value : '/usr/sbin/ampere_spi_util.sh', description : 'Script to grant a permission to access SPI-NOR')
+option('crashdump-log-path', type : 'string', value : '/var/lib/faultlogs/crashdump/', description : 'File system path containing CrashDump logs')
+option('ampere-power-control-lock-script', type : 'string', value : '/usr/sbin/ampere_power_control_lock.sh', description : 'Script to mask/unmask a power action. Arg1 is on/reboot/off. Arg2 is false for mask and true for unmask')
+option('ampere-bert-powerlock-timer', type: 'integer', min: 5000, max: 120000, description: 'The amount of time to wait BERT process complete in milliseconds', value: 60000)
