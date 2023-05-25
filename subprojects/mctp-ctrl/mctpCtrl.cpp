@@ -47,8 +47,9 @@ std::shared_ptr<sdbusplus::asio::dbus_interface> hostIntS0 = nullptr;
 std::shared_ptr<sdbusplus::asio::dbus_interface> hostIntS1 = nullptr;
 std::shared_ptr<sdbusplus::asio::dbus_interface> hostPresenceS0 = nullptr;
 std::shared_ptr<sdbusplus::asio::dbus_interface> hostPresenceS1 = nullptr;
-const char* script_slave_present = "/usr/sbin/ampere_slave_present.sh";
-const char* script_s1_ready = "/usr/sbin/ampere_s1_ready.sh";
+const char* script_slave_present = "/usr/sbin/ampere_mctp_ctrl.sh s1_present";
+const char* script_s1_ready = "/usr/sbin/ampere_mctp_ctrl.sh s1_mctp_ready";
+const char* script_mctp_ready = "/usr/sbin/ampere_mctp_ctrl.sh s0_mctp_ready";
 constexpr const char* cpuInventoryPath =
     "/xyz/openbmc_project/inventory/system/chassis/motherboard";
 
@@ -291,6 +292,36 @@ void removeHostMctpEid()
         }
     }
 }
+
+bool waitForMctpReady()
+{
+    int cnt = 0;
+    /* timeout in wait for the MCTP interface after SYS_PWRGD is 60000ms*/
+    int timeout = 60000;
+    timeout = timeout/1000;
+    while (cnt < timeout)
+    {
+        try
+        {
+            std::size_t found = exec(script_mctp_ready).find("1");
+            if (found!=std::string::npos)
+            {
+                return true;
+            }
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << e.what() << std::endl;
+        }
+        cnt ++;
+        std::this_thread::sleep_for(
+            std::chrono::milliseconds(1000)
+        );
+    }
+
+    return false;
+}
+
 sdbusplus::bus::match::match
     startHostStateMonitor(std::shared_ptr<sdbusplus::asio::connection> conn)
 {
@@ -317,7 +348,14 @@ sdbusplus::bus::match::match
         {
             if (*variant == hostStateRunning)
             {
-                addHostMctpEid();
+                if (waitForMctpReady())
+                {
+                    addHostMctpEid();
+                }
+                else
+                {
+                    std::cerr << "MCTP is not ready in 60s after SYS_PWRGD\n";
+                }
             }
             else
             {

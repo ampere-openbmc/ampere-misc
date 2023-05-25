@@ -39,12 +39,3 @@ configure_file(
     install: true,
     install_dir: systemd.get_pkgconfig_variable('systemdsystemunitdir')
 )
-
-script_files = ['ampere_slave_present.sh', 'ampere_s1_ready.sh']
-foreach file : script_files
-    install_data(
-        file,
-        install_mode: 'rwxr-xr-x',
-        install_dir: get_option('sbindir')
-    )
-endforeach
