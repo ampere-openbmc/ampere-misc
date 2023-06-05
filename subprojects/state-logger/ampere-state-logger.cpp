@@ -63,7 +63,7 @@ inline static sdbusplus::bus::match::match
             if (*variant == "xyz.openbmc_project.State.Host.HostState.Off")
             {
                 std::string message("Host state is off");
-                std::string redfishMsgId("OpenBMC.0.1.AmpereWarning");
+                std::string redfishMsgId("OpenBMC.0.1.AmpereEvent");
 
                 sd_journal_send("MESSAGE=%s", message.c_str(),
                                 "REDFISH_MESSAGE_ID=%s", redfishMsgId.c_str(),
@@ -74,7 +74,7 @@ inline static sdbusplus::bus::match::match
                      "xyz.openbmc_project.State.Host.HostState.Running")
             {
                 std::string message("Host state is on");
-                std::string redfishMsgId("OpenBMC.0.1.AmpereWarning");
+                std::string redfishMsgId("OpenBMC.0.1.AmpereEvent");
 
                 sd_journal_send("MESSAGE=%s", message.c_str(),
                                 "REDFISH_MESSAGE_ID=%s", redfishMsgId.c_str(),
