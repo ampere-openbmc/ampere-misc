@@ -29,44 +29,47 @@ namespace phosphor
 {
 namespace Control
 {
-namespace Power
-{
-namespace Manager
-{
+	namespace Power
+	{
+		namespace Manager
+		{
 
-PHOSPHOR_LOG2_USING;
+			PHOSPHOR_LOG2_USING;
 
-void PowerManager::parsePowerManagerCfg()
-{
-    std::ifstream powerCfgFile(powerCfgJsonFile);
+			void PowerManager::parsePowerManagerCfg()
+			{
+				std::ifstream powerCfgFile(powerCfgJsonFile);
 
-    if (!powerCfgFile.is_open())
-    {
-        error("Can not open power configuration file");
-        return;
-    }
+				if (!powerCfgFile.is_open()) {
+					error("Can not open power configuration file");
+					return;
+				}
 
-    auto data = nlohmann::json::parse(powerCfgFile, nullptr, false);
+				auto data = nlohmann::json::parse(
+					powerCfgFile, nullptr, false);
 
-    if (data.is_discarded())
-    {
-        error("Can not parse power configuration data");
-        return;
-    }
+				if (data.is_discarded()) {
+					error("Can not parse power configuration data");
+					return;
+				}
 
-    /*
+				/*
      * Get the information of total power consumption
      */
-    if (data.contains("total_power"))
-    {
-        const auto& totalPwr = data.at("total_power");
-        totalPwrSrv = totalPwr.value("service", totalPwrSrv);
-        totalPwrObjectPath = totalPwr.value("object_path", totalPwrObjectPath);
-        totalPwrItf = totalPwr.value("interface", totalPwrItf);
-    }
-}
+				if (data.contains("total_power")) {
+					const auto &totalPwr =
+						data.at("total_power");
+					totalPwrSrv = totalPwr.value(
+						"service", totalPwrSrv);
+					totalPwrObjectPath = totalPwr.value(
+						"object_path",
+						totalPwrObjectPath);
+					totalPwrItf = totalPwr.value(
+						"interface", totalPwrItf);
+				}
+			}
 
-} // namespace Manager
-} // namespace Power
+		} // namespace Manager
+	} // namespace Power
 } // namespace Control
 } // namespace phosphor

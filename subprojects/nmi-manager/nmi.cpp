@@ -18,23 +18,21 @@
 
 #include <sdbusplus/bus.hpp>
 
-int main(int, char*[])
+int main(int, char *[])
 {
+	constexpr auto BUSPATH_NMI = "/xyz/openbmc_project/control/host0/nmi";
+	constexpr auto BUSNAME_NMI = "xyz.openbmc_project.Control.Host.NMI";
+	auto bus = sdbusplus::bus::new_default();
 
-    constexpr auto BUSPATH_NMI = "/xyz/openbmc_project/control/host0/nmi";
-    constexpr auto BUSNAME_NMI = "xyz.openbmc_project.Control.Host.NMI";
-    auto bus = sdbusplus::bus::new_default();
-    
-    // Add sdbusplus ObjectManager
-    sdbusplus::server::manager_t objManager(bus, BUSPATH_NMI);
-    dbus::nmi::NMI NMI(bus, BUSPATH_NMI);
-    bus.request_name(BUSNAME_NMI);
+	// Add sdbusplus ObjectManager
+	sdbusplus::server::manager_t objManager(bus, BUSPATH_NMI);
+	dbus::nmi::NMI NMI(bus, BUSPATH_NMI);
+	bus.request_name(BUSNAME_NMI);
 
-    while (true)
-    {
-        bus.process_discard();
-        bus.wait();
-    }
+	while (true) {
+		bus.process_discard();
+		bus.wait();
+	}
 
-    return 0;
+	return 0;
 }

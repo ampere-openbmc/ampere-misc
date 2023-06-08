@@ -11,32 +11,32 @@
  * JTAG_XFER_MODE: JTAG transfer mode. Used to set JTAG controller transfer mode
  * This is bitmask for feature param in jtag_mode for ioctl JTAG_SIOCMODE
  */
-#define  JTAG_XFER_MODE 0
+#define JTAG_XFER_MODE 0
 /*
  * JTAG_CONTROL_MODE: JTAG controller mode. Used to set JTAG controller mode
  * This is bitmask for feature param in jtag_mode for ioctl JTAG_SIOCMODE
  */
-#define  JTAG_CONTROL_MODE 1
+#define JTAG_CONTROL_MODE 1
 /*
  * JTAG_SLAVE_MODE: JTAG slave mode. Used to set JTAG controller slave mode
  * This is bitmask for mode param in jtag_mode for ioctl JTAG_SIOCMODE
  */
-#define  JTAG_SLAVE_MODE 0
+#define JTAG_SLAVE_MODE 0
 /*
  * JTAG_MASTER_MODE: JTAG master mode. Used to set JTAG controller master mode
  * This is bitmask for mode param in jtag_mode for ioctl JTAG_SIOCMODE
  */
-#define  JTAG_MASTER_MODE 1
+#define JTAG_MASTER_MODE 1
 /*
  * JTAG_XFER_HW_MODE: JTAG hardware mode. Used to set HW drived or bitbang
  * mode. This is bitmask for mode param in jtag_mode for ioctl JTAG_SIOCMODE
  */
-#define  JTAG_XFER_HW_MODE 1
+#define JTAG_XFER_HW_MODE 1
 /*
  * JTAG_XFER_SW_MODE: JTAG software mode. Used to set SW drived or bitbang
  * mode. This is bitmask for mode param in jtag_mode for ioctl JTAG_SIOCMODE
  */
-#define  JTAG_XFER_SW_MODE 0
+#define JTAG_XFER_SW_MODE 0
 
 /**
  * enum jtag_endstate:
@@ -124,9 +124,9 @@ enum jtag_xfer_direction {
  * Structure provide interface to JTAG device for JTAG set state execution.
  */
 struct jtag_end_tap_state {
-	__u8	reset;
-	__u8	endstate;
-	__u8	tck;
+	__u8 reset;
+	__u8 endstate;
+	__u8 tck;
 };
 
 /**
@@ -141,12 +141,12 @@ struct jtag_end_tap_state {
  * Structure provide interface to JTAG device for JTAG SDR/SIR xfer execution.
  */
 struct jtag_xfer {
-	__u8	type;
-	__u8	direction;
-	__u8	endstate;
-	__u8	padding;
-	__u32	length;
-	__u64	tdio;
+	__u8 type;
+	__u8 direction;
+	__u8 endstate;
+	__u8 padding;
+	__u32 length;
+	__u64 tdio;
 };
 
 /**
@@ -159,9 +159,9 @@ struct jtag_xfer {
  * Structure provide interface to JTAG device for JTAG bitbang execution.
  */
 struct tck_bitbang {
-	__u8	tms;
-	__u8	tdi;
-	__u8	tdo;
+	__u8 tms;
+	__u8 tdi;
+	__u8 tdo;
 } __attribute__((__packed__));
 
 /**
@@ -176,12 +176,12 @@ struct tck_bitbang {
  * Structure provide configuration modes to JTAG device.
  */
 struct jtag_mode {
-	__u32	feature;
-	__u32	mode;
+	__u32 feature;
+	__u32 mode;
 };
 
 /* ioctl interface */
-#define __JTAG_IOCTL_MAGIC	0xb2
+#define __JTAG_IOCTL_MAGIC 0xb2
 
 #define JTAG_SIOCSTATE	_IOW(__JTAG_IOCTL_MAGIC, 0, struct jtag_end_tap_state)
 #define JTAG_SIOCFREQ	_IOW(__JTAG_IOCTL_MAGIC, 1, unsigned int)
@@ -189,6 +189,6 @@ struct jtag_mode {
 #define JTAG_IOCXFER	_IOWR(__JTAG_IOCTL_MAGIC, 3, struct jtag_xfer)
 #define JTAG_GIOCSTATUS _IOWR(__JTAG_IOCTL_MAGIC, 4, enum jtag_endstate)
 #define JTAG_SIOCMODE	_IOW(__JTAG_IOCTL_MAGIC, 5, unsigned int)
-#define JTAG_IOCBITBANG	_IOW(__JTAG_IOCTL_MAGIC, 6, unsigned int)
+#define JTAG_IOCBITBANG _IOW(__JTAG_IOCTL_MAGIC, 6, unsigned int)
 
 #endif /* __UAPI_LINUX_JTAG_H */

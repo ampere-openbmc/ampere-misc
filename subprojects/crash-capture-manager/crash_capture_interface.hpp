@@ -17,71 +17,65 @@ namespace sdbusRule = sdbusplus::bus::match::rules;
  *  @details A concrete implementation for com.Ampere.CrashCapture.Status
  *  DBus API.
  */
-class CrashCapture : public CrashCaptureInherit
-{
-  public:
-    CrashCapture() = delete;
-    CrashCapture(const CrashCapture&) = delete;
-    CrashCapture& operator=(const CrashCapture&) = delete;
-    CrashCapture(CrashCapture&&) = delete;
-    CrashCapture& operator=(CrashCapture&&) = delete;
-    virtual ~CrashCapture() = default;
-    /** @brief Constructs CrashCapture Manager
+class CrashCapture : public CrashCaptureInherit {
+    public:
+	CrashCapture() = delete;
+	CrashCapture(const CrashCapture &) = delete;
+	CrashCapture &operator=(const CrashCapture &) = delete;
+	CrashCapture(CrashCapture &&) = delete;
+	CrashCapture &operator=(CrashCapture &&) = delete;
+	virtual ~CrashCapture() = default;
+	/** @brief Constructs CrashCapture Manager
      *
      * @param[in] bus       - The Dbus bus object
      * @param[in] objPath   - The Dbus object path
      */
-    CrashCapture(sdbusplus::bus::bus& bus, const char* objPath);
+	CrashCapture(sdbusplus::bus::bus &bus, const char *objPath);
 
-    /** @brief Set value of TriggerActions **/
-    CrashCaptureBase::TriggerAction triggerActions(TriggerAction value) override;
+	/** @brief Set value of TriggerActions **/
+	CrashCaptureBase::TriggerAction
+	triggerActions(TriggerAction value) override;
 
-    /** @brief Set value of TriggerUE **/
-    bool triggerUE(bool value) override;
+	/** @brief Set value of TriggerUE **/
+	bool triggerUE(bool value) override;
 
-    /** @brief Set value of TriggerProcess **/
-    bool triggerProcess(bool value) override;
+	/** @brief Set value of TriggerProcess **/
+	bool triggerProcess(bool value) override;
 
-  private:
+    private:
+	enum bert_host_status {
+		HOST_BOOTING = 0,
+		HOST_COMPLETE = 1,
+		HOST_FAILURE = 2,
+		HOST_UA = 3,
+	};
 
-    enum bert_host_status{
-        HOST_BOOTING = 0,
-        HOST_COMPLETE = 1,
-        HOST_FAILURE = 2,
-        HOST_UA = 3,
-    };
+	/** @brief Persistent sdbusplus DBus bus connection. **/
+	sdbusplus::bus::bus &bus;
 
-    /** @brief Persistent sdbusplus DBus bus connection. **/
-    sdbusplus::bus::bus& bus;
+	/** @brief object path */
+	std::string objectPath;
 
-    /** @brief object path */
-    std::string objectPath;
+	/** @brief Used to subscribe to numeric sensor event  **/
+	std::unique_ptr<sdbusplus::bus::match_t> numericSensorEventSignal;
 
-    /** @brief Used to subscribe to numeric sensor event  **/
-    std::unique_ptr<sdbusplus::bus::match_t> numericSensorEventSignal;
+	bool isBertTrigger = false;
+	bool checkBertFlag = false;
+	bert_host_status hostStatus = HOST_UA;
+	std::unique_ptr<phosphor::Timer> bertHostOffTimer, bertHostOnTimer,
+		bertHostFailTimer, bertPowerLockTimer;
 
-    bool isBertTrigger = false;
-    bool checkBertFlag = false;
-    bert_host_status hostStatus = HOST_UA;
-    std::unique_ptr<phosphor::Timer> bertHostOffTimer,
-                                     bertHostOnTimer,
-                                     bertHostFailTimer,
-                                     bertPowerLockTimer;
-
-
-    void executeTransition(TriggerAction value);
-    void handleNumericSensorEventSignal();
-    void handleDbusEventSignal();
-    void handleBertHostBootEvent(uint8_t tid,
-                                 uint16_t sensorId,
-                                 uint32_t presentReading);
-    void handleBertHostOnEvent(void);
-    void initBertHostOnEvent(void);
-    void bertHostFailTimeOutHdl(void);
-    void bertHostOnTimeOutHdl(void);
-    void handleBmcUnavailable(void);
-    void bertPowerLockTimeOutHdl(void);
-
+	void executeTransition(TriggerAction value);
+	void handleNumericSensorEventSignal();
+	void handleDbusEventSignal();
+	void handleBertHostBootEvent(uint8_t tid, uint16_t sensorId,
+				     uint32_t presentReading);
+	void handleBertHostOnEvent(void);
+	void initBertHostOnEvent(void);
+	void bertHostFailTimeOutHdl(void);
+	void bertHostOnTimeOutHdl(void);
+	void handleBmcUnavailable(void);
+	void bertPowerLockTimeOutHdl(void);
 };
 
 } // namespace crashcapture

@@ -1,8 +1,7 @@
 {
-    "total_power": 
-    {
-        "object_path" : "/xyz/openbmc_project/sensors/power/total_power",
-        "service"   : "xyz.openbmc_project.VirtualSensor",
-        "interface" : "xyz.openbmc_project.Sensor.Value"
+    "total_power": {
+        "object_path": "/xyz/openbmc_project/sensors/power/total_power",
+        "service": "xyz.openbmc_project.VirtualSensor",
+        "interface": "xyz.openbmc_project.Sensor.Value"
     }
 }

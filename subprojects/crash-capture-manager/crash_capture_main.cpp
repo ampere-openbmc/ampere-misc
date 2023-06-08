@@ -19,21 +19,22 @@
 #include <sdeventplus/exception.hpp>
 #include "crash_capture_interface.hpp"
 
-int main(int, char*[])
+int main(int, char *[])
 {
-    constexpr auto BUSPATH_CRASHCAPTURE = "/com/ampere/crashcapture/trigger";
-    constexpr auto BUSNAME_CRASHCAPTURE = "com.ampere.CrashCapture.Trigger";
-    auto bus = sdbusplus::bus::new_default();
-    auto event = sdeventplus::Event::get_default();
+	constexpr auto BUSPATH_CRASHCAPTURE =
+		"/com/ampere/crashcapture/trigger";
+	constexpr auto BUSNAME_CRASHCAPTURE = "com.ampere.CrashCapture.Trigger";
+	auto bus = sdbusplus::bus::new_default();
+	auto event = sdeventplus::Event::get_default();
 
-    bus.attach_event(event.get(), SD_EVENT_PRIORITY_NORMAL);
+	bus.attach_event(event.get(), SD_EVENT_PRIORITY_NORMAL);
 
-    sdbusplus::server::manager_t objManager(bus, BUSPATH_CRASHCAPTURE);
-    crashcapture::CrashCapture CrashCapture(bus, BUSPATH_CRASHCAPTURE);
-    // Add sdbusplus ObjectManager
-    bus.request_name(BUSNAME_CRASHCAPTURE);
+	sdbusplus::server::manager_t objManager(bus, BUSPATH_CRASHCAPTURE);
+	crashcapture::CrashCapture CrashCapture(bus, BUSPATH_CRASHCAPTURE);
+	// Add sdbusplus ObjectManager
+	bus.request_name(BUSNAME_CRASHCAPTURE);
 
-    event.loop();
+	event.loop();
 
-    return 0;
+	return 0;
 }

@@ -20,24 +20,25 @@
 #include <sdeventplus/event.hpp>
 #include <sdeventplus/exception.hpp>
 
-int main(int, char*[])
+int main(int, char *[])
 {
-    constexpr auto BUSPATH_PW_MNG =
-        "/xyz/openbmc_project/control/power/manager";
-    constexpr auto BUSNAME_PW_MNG = "xyz.openbmc_project.Control.power.manager";
-    auto bus = sdbusplus::bus::new_default();
-    auto event = sdeventplus::Event::get_default();
+	constexpr auto BUSPATH_PW_MNG =
+		"/xyz/openbmc_project/control/power/manager";
+	constexpr auto BUSNAME_PW_MNG =
+		"xyz.openbmc_project.Control.power.manager";
+	auto bus = sdbusplus::bus::new_default();
+	auto event = sdeventplus::Event::get_default();
 
-    bus.attach_event(event.get(), SD_EVENT_PRIORITY_NORMAL);
+	bus.attach_event(event.get(), SD_EVENT_PRIORITY_NORMAL);
 
-    sdbusplus::server::manager_t objManager(bus, BUSPATH_PW_MNG);
-    phosphor::Control::Power::Manager::PowerManager powerManager(
-        bus, BUSPATH_PW_MNG, event);
+	sdbusplus::server::manager_t objManager(bus, BUSPATH_PW_MNG);
+	phosphor::Control::Power::Manager::PowerManager powerManager(
+		bus, BUSPATH_PW_MNG, event);
 
-    // Add sdbusplus ObjectManager
-    bus.request_name(BUSNAME_PW_MNG);
+	// Add sdbusplus ObjectManager
+	bus.request_name(BUSNAME_PW_MNG);
 
-    event.loop();
+	event.loop();
 
-    return 0;
+	return 0;
 }

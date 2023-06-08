@@ -25,28 +25,28 @@ namespace dbus
 namespace nmi
 {
 
-NMI::NMI(sdbusplus::bus_t& bus, const char* path) :
-    Interface(bus, path), bus(bus), objectPath(path)
-{}
+	NMI::NMI(sdbusplus::bus_t &bus, const char *path)
+		: Interface(bus, path), bus(bus), objectPath(path)
+	{
+	}
 
-void NMI::nmi()
-{
-    using namespace phosphor::logging;
-    constexpr auto SYSTEMD_SERVICE = "org.freedesktop.systemd1";
-    constexpr auto SYSTEMD_OBJ_PATH = "/org/freedesktop/systemd1";
-    constexpr auto SYSTEMD_INTERFACE = "org.freedesktop.systemd1.Manager";
+	void NMI::nmi()
+	{
+		using namespace phosphor::logging;
+		constexpr auto SYSTEMD_SERVICE = "org.freedesktop.systemd1";
+		constexpr auto SYSTEMD_OBJ_PATH = "/org/freedesktop/systemd1";
+		constexpr auto SYSTEMD_INTERFACE =
+			"org.freedesktop.systemd1.Manager";
 
-    auto method = bus.new_method_call(SYSTEMD_SERVICE, SYSTEMD_OBJ_PATH,
-                                      SYSTEMD_INTERFACE, "StartUnit");
-    method.append("nmi.service", "replace");
-    try
-    {
-        bus.call_noreply(method);
-    }
-    catch (const sdbusplus::exception_t& e)
-    {
-        log<level::ERR>("Error occur when call nmi.service");
-    }
-}
-} // namespace proc
-} // namespace openpower
+		auto method =
+			bus.new_method_call(SYSTEMD_SERVICE, SYSTEMD_OBJ_PATH,
+					    SYSTEMD_INTERFACE, "StartUnit");
+		method.append("nmi.service", "replace");
+		try {
+			bus.call_noreply(method);
+		} catch (const sdbusplus::exception_t &e) {
+			log<level::ERR>("Error occur when call nmi.service");
+		}
+	}
+} // namespace nmi
+} // namespace dbus
