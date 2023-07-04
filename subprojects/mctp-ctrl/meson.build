@@ -37,5 +37,5 @@ configure_file(
     input: 'xyz.openbmc_project.AmpereMctpCtrl.service',
     output: 'xyz.openbmc_project.AmpereMctpCtrl.service',
     install: true,
-    install_dir: systemd.get_pkgconfig_variable('systemdsystemunitdir')
+    install_dir: systemd.get_variable('systemdsystemunitdir')
 )

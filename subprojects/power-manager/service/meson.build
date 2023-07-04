@@ -11,6 +11,6 @@ foreach file : uint_files
         output: file,
         configuration: conf_data,
         install: true,
-        install_dir: systemd.get_pkgconfig_variable('systemdsystemunitdir')
+        install_dir: systemd.get_variable('systemdsystemunitdir')
     )
 endforeach

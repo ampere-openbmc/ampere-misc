@@ -25,5 +25,5 @@ configure_file(
     input: 'ampere-trst-wa.service.in',
     output: 'ampere-trst-wa.service',
     install: true,
-    install_dir: systemd.get_pkgconfig_variable('systemdsystemunitdir')
+    install_dir: systemd.get_variable('systemdsystemunitdir')
 )

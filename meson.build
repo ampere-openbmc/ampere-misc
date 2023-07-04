@@ -2,7 +2,7 @@ project(
     'amere-misc',
     'cpp',
     version: '1.0',
-    meson_version: '>=0.57.0',
+    meson_version: '>=0.58.0',
     default_options: [
         'cpp_std=c++20'
     ]
