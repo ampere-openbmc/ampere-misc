@@ -7,7 +7,7 @@ BindTo=pldmd.service
 Restart=always
 ExecStart=/usr/sbin/ampere-mctp-ctrl
 Type=dbus
-BusName=xyz.openbmc_project.MCTP.Control
+BusName=xyz.openbmc_project.MCTP
 
 [Install]
 WantedBy=pldmd.service

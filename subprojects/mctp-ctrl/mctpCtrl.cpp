@@ -344,7 +344,7 @@ startHostStateMonitor(std::shared_ptr<sdbusplus::asio::connection> conn)
 
 int main(int argc, char **argv)
 {
-	conn->request_name("xyz.openbmc_project.MCTP.Control");
+	conn->request_name("xyz.openbmc_project.MCTP");
 	objectServer.add_manager("/xyz/openbmc_project/mctp");
 	slave_present = false;
 	try {
