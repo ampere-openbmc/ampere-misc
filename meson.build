@@ -26,6 +26,10 @@ if get_option('ampere-trst-wa').enabled()
     subproject('ampere-trst-wa')
 endif
 
+if get_option('ampere-cpu-present').enabled()
+    subproject('ampere-cpu-present')
+endif
+
 if get_option('power-manager').enabled()
     subproject('power-manager')
 endif

@@ -1,0 +1,11 @@
+[Unit]
+Description = Ampere CPU DBus Interface
+
+[Service]
+Restart=always
+ExecStart=/usr/sbin/ampere-cpu-present
+Type=dbus
+BusName=xyz.openbmc_project.Ampere.Cpu
+
+[Install]
+WantedBy=multi-user.target

@@ -39,3 +39,11 @@ option(
     value : 'disabled',
     description : 'Enable building crash-capture-manager'
 )
+
+option(
+    'ampere-cpu-present',
+    type : 'feature',
+    value : 'disabled',
+    description : 'Enable building ampere-cpu-present'
+)
+
