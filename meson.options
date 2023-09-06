@@ -1,49 +1,75 @@
-option('nmi-manager', type : 'feature',
+option(
+    'nmi-manager',
+    type : 'feature',
     value : 'disabled',
     description : 'Enable building nmi-manager'
 )
 
-option('ampere-cpld-fwupdate', type : 'feature',
+option(
+    'ampere-cpld-fwupdate',
+    type : 'feature',
     value : 'disabled',
     description : 'Enable building ampere-cpld-fwupdate'
 )
 
-option('state-logger', type : 'feature',
+option(
+    'state-logger',
+    type : 'feature',
     value : 'disabled',
     description : 'Enable building state-logger'
 )
 
-option('mctp-ctrl', type : 'feature',
+option(
+    'mctp-ctrl',
+    type : 'feature',
     value : 'disabled',
     description : 'Enable building mctp-ctrl'
 )
 
-option('ampere-trst-wa', type : 'feature',
+option(
+    'ampere-trst-wa',
+    type : 'feature',
     value : 'disabled',
     description : 'Enable building ampere-trst-wa'
 )
 
-option('power-manager', type : 'feature',
+option(
+    'power-manager',
+    type : 'feature',
     value : 'disabled',
     description : 'Enable building power-manager'
 )
 
-option('mctp-delay-before-add-terminus', type: 'integer',
-  min: 0, max: 90000, value: 2000,
-  description: 'The delay after FW_BOOT_OK go high to MPRo ready to response PLDM commands'
+option(
+    'mctp-delay-before-add-terminus',
+    type: 'integer',
+    min: 0,
+    max: 90000,
+    value: 2000,
+    description: 'The delay after FW_BOOT_OK go high to MPRo ready to response PLDM commands'
 )
 
-option('mctp-delay-before-add-second-terminus', type: 'integer',
-  min: 0, max: 30000, value: 0,
-  description: 'The delay after adding S0 terminus and before adding S1 terminus'
+option(
+    'mctp-delay-before-add-second-terminus',
+    type: 'integer',
+    min: 0,
+    max: 30000, 
+    value: 0,
+    description: 'The delay after adding S0 terminus and before adding S1 terminus'
 )
 
-option('mctp-checking-s1-ready-time-out', type: 'integer', 
-  min: 0, max: 30000, value: 0, 
-  description: 'Time out in checking S1 ready'
+option(
+    'mctp-checking-s1-ready-time-out',
+    type: 'integer',
+    min: 0,
+    max: 30000,
+    value: 0, 
+    description: 'Time out in checking S1 ready'
 )
 
-option('crash-capture-manager', type : 'feature',
+option(
+    'crash-capture-manager',
+    type : 'feature',
     value : 'disabled',
     description : 'Enable building crash-capture-manager'
 )
