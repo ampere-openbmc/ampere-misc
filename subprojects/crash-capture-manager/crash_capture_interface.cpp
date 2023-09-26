@@ -43,7 +43,7 @@ bool CrashCapture::triggerUE(bool value)
 bool CrashCapture::triggerProcess(bool value)
 {
 	info("Setting the triggerProcess field to {VALUE}", "VALUE", value);
-	if (value && isBertTrigger) {
+	if (value && (isBertTrigger || (hostStatus == HOST_FAILURE))) {
 		bertHandler(bus, HOST_ON);
 		isBertTrigger = false;
 		maskPowerControl(false);
