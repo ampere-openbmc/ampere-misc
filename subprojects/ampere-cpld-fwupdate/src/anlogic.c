@@ -541,11 +541,9 @@ static int ANLOGICFamily_cpld_checksum(FILE *jed_fd, uint32_t *crc)
 					  i2c_cpld_checksum(jed_fd, crc);
 }
 
-static int ANLOGICFamily_cpld_dev_open(cpld_intf_t intf, uint8_t id,
-				       cpld_intf_info_t *attr)
+static int ANLOGICFamily_cpld_dev_open(cpld_intf_t intf, cpld_intf_info_t *attr)
 {
 	int rc = 0;
-	UNUSED(id);
 
 	cpld.intf = intf;
 	if (attr != NULL) {
@@ -588,6 +586,8 @@ static int ANLOGICFamily_cpld_dev_close(cpld_intf_t intf)
 struct cpld_dev_info
 	anlogic_dev_list[] = { [0] = {
 				       .name = "ANLOGIC-Family",
+				       .dev_id = 0xFFFFFFFF,
+				       .dev_id2 = 0xFFFFFFFF,
 				       .cpld_open = ANLOGICFamily_cpld_dev_open,
 				       .cpld_close =
 					       ANLOGICFamily_cpld_dev_close,

@@ -26,12 +26,11 @@ typedef struct {
 	int fd;
 	int bus;
 	int slave;
-	int type;
 	int jtag_device;
 } cpld_intf_info_t;
 
-int cpld_intf_open(uint8_t cpld_index, cpld_intf_t intf,
-		   cpld_intf_info_t *attr);
+int cpld_probe(cpld_intf_t intf, cpld_intf_info_t *attr);
+int cpld_scan(cpld_intf_t intf);
 int cpld_intf_close(cpld_intf_t intf);
 int cpld_get_ver(uint32_t *ver);
 int cpld_get_checksum(char *file, uint32_t *crc);
@@ -43,7 +42,10 @@ int cpld_verify(char *file);
 struct cpld_dev_info {
 	const char *name;
 	uint32_t dev_id;
-	int (*cpld_open)(cpld_intf_t intf, uint8_t id, cpld_intf_info_t *attr);
+	uint32_t dev_id2;
+	uint32_t dev_id3;
+	uint32_t dev_id4;
+	int (*cpld_open)(cpld_intf_t intf, cpld_intf_info_t *attr);
 	int (*cpld_close)(cpld_intf_t intf);
 	int (*cpld_ver)(uint32_t *ver);
 	int (*cpld_checksum)(FILE *fd, uint32_t *crc);

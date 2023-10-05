@@ -10,15 +10,14 @@ Please get the JEDEC file format before you read the code
 #include "anlogic.h"
 
 struct cpld_dev_info *cur_dev = NULL;
-struct cpld_dev_info **cpld_dev_list;
 
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
-
-const char *cpld_list[] = { "LCMXO2-Family", "LCMXO3-Family", "ANLOGIC-Family",
-			    "YZBB-Family" };
-
-static int cpld_probe(cpld_intf_t intf, uint8_t id, cpld_intf_info_t *attr)
+int cpld_probe(cpld_intf_t intf, cpld_intf_info_t *attr)
 {
+	//.No difference between other CPLDs
+	// JTAG: Set JTAG hardware mode
+	// I2C: Open I2C port
+	cur_dev = &lattice_dev_list[0];
+
 	if (cur_dev == NULL)
 		return -1;
 
@@ -27,7 +26,7 @@ static int cpld_probe(cpld_intf_t intf, uint8_t id, cpld_intf_info_t *attr)
 		return -1;
 	}
 
-	return cur_dev->cpld_open(intf, id, attr);
+	return cur_dev->cpld_open(intf, attr);
 }
 
 static int cpld_remove(cpld_intf_t intf)
@@ -43,56 +42,51 @@ static int cpld_remove(cpld_intf_t intf)
 	return cur_dev->cpld_close(intf);
 }
 
-static int cpld_malloc_list()
+int cpld_scan(cpld_intf_t intf)
 {
-	unsigned int i, j, k = 0;
-	unsigned int dev_cnts = 0;
+	unsigned int idcode = 0;
 
-	dev_cnts += ARRAY_SIZE(lattice_dev_list);
-	dev_cnts += ARRAY_SIZE(anlogic_dev_list);
-
-	cpld_dev_list = (struct cpld_dev_info **)malloc(
-		sizeof(struct cpld_dev_info *) * dev_cnts);
-	for (i = 0; i < dev_cnts; i++, j++) {
-		if (i < ARRAY_SIZE(lattice_dev_list))
-			cpld_dev_list[j] = &lattice_dev_list[i];
-		else {
-			k = i - ARRAY_SIZE(lattice_dev_list);
-			cpld_dev_list[j] = &anlogic_dev_list[k];
+	// Check for LATTICE device (Jtag and I2C)
+	cpld_get_device_id(&idcode);
+	for (int i = 0; i < LATTICE_MAX_DEVICE_SUPPORT; i++) {
+		if (idcode == lattice_dev_list[i].dev_id) {
+			cur_dev = &lattice_dev_list[i];
+			printf("Detected: %s\n", cur_dev->name);
+			return 0;
 		}
 	}
 
-	return dev_cnts;
-}
+	// Check for YZBB JTAG device
+	// Todo: Have not supported YZBB Jtag device
 
-int cpld_intf_open(uint8_t cpld_index, cpld_intf_t intf, cpld_intf_info_t *attr)
-{
-	int i;
-	int dev_cnts;
+	// Check for ANALOGIC Jtag device
+	// Todo: Have not supported ANALOGIC Jtag device
 
-	if (cur_dev != NULL)
-		return 0;
+	if (intf == INTF_I2C) {
+		uint8_t idcode_i2c[16] = { 0 };
+		// Check for YZBB I2C device
+		cur_dev = &lattice_dev_list[LATTICE_MAX_DEVICE_SUPPORT - 1];
+		cpld_get_device_id((unsigned int *)&idcode_i2c);
+		if (!memcmp(&idcode_i2c,
+			    &lattice_dev_list[LATTICE_MAX_DEVICE_SUPPORT - 1]
+				     .dev_id,
+			    YZBB_DEVICEID_LENGTH)) {
+			printf("Detected: %s\n", cur_dev->name);
+			return 0;
+		}
 
-	if (cpld_index >= UNKNOWN_DEV) {
-		printf("Unknown CPLD index = %d\n", cpld_index);
-		return -1;
-	}
-
-	dev_cnts = cpld_malloc_list();
-	for (i = 0; i < dev_cnts; i++) {
-		if (!strcmp(cpld_list[cpld_index], cpld_dev_list[i]->name)) {
-			cur_dev = cpld_dev_list[i];
-			break;
+		// Check for ANALOGIC I2C device
+		cur_dev = &anlogic_dev_list[0];
+		cpld_get_device_id((unsigned int *)&idcode_i2c);
+		if (!memcmp(&idcode_i2c, &anlogic_dev_list[0].dev_id,
+			    DEVICEID_LENGTH)) {
+			printf("Detected: %s\n", cur_dev->name);
+			return 0;
 		}
 	}
-	if (i == dev_cnts) {
-		//No CPLD device match
-		printf("Unknown CPLD name = %s\n", cpld_list[cpld_index]);
-		free(cpld_dev_list);
-		return -1;
-	}
 
-	return cpld_probe(intf, cpld_index, attr);
+	printf("The CPLD device is not supported list\n");
+	return 1;
 }
 
 int cpld_intf_close(cpld_intf_t intf)
@@ -100,7 +94,6 @@ int cpld_intf_close(cpld_intf_t intf)
 	int ret;
 
 	ret = cpld_remove(intf);
-	free(cpld_dev_list);
 	cur_dev = NULL;
 
 	return ret;

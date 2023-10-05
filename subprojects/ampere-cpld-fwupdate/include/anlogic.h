@@ -35,6 +35,7 @@
 #define PAGE_SIZE   16
 #define SECTOR_SIZE 4096
 
-extern struct cpld_dev_info anlogic_dev_list[1];
+#define ANALOGIC_MAX_DEVICE_SUPPORT 1
+extern struct cpld_dev_info anlogic_dev_list[ANALOGIC_MAX_DEVICE_SUPPORT];
 
 #endif /* _ANLOGIC_H_ */

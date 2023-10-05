@@ -74,5 +74,6 @@ int lcmxo2_2000hc_cpld_verify(FILE *jed_fd);
 #define YZBB_UFM_DATA_LENGTH	 16
 #define YZBB_DEVICEID_LENGTH	 12
 
-extern struct cpld_dev_info lattice_dev_list[3];
+#define LATTICE_MAX_DEVICE_SUPPORT 3
+extern struct cpld_dev_info lattice_dev_list[LATTICE_MAX_DEVICE_SUPPORT];
 #endif

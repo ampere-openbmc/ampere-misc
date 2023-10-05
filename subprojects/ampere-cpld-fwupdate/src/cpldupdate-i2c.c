@@ -32,12 +32,7 @@ static void usage(FILE *fp, char **argv)
 {
 	fprintf(fp,
 		"\nampere_cpldupdate_i2c v0.0.2 Copyright 2022.\n\n"
-		"Usage: %s -b <bus> -s <slave> -t <type> [options]\n\n"
-		"Type:\n"
-		" 0 - LCMXO2\n"
-		" 1 - LCMXO3\n"
-		" 2 - ANLOGIC\n"
-		" 3 - YZBB\n"
+		"Usage: %s -b <bus> -s <slave> [options]\n\n"
 		"Options:\n"
 		" -h | --help                   Print this message\n"
 		" -p | --program                Erase, program and verify cpld\n"
@@ -98,10 +93,6 @@ int main(int argc, char *argv[])
 			strcpy(in_name, optarg);
 			cpld_info.bus = (uint8_t)strtoul(in_name, NULL, 0);
 			break;
-		case 't':
-			strcpy(in_name, optarg);
-			cpld_info.type = (uint8_t)strtoul(in_name, NULL, 0);
-			break;
 		case 's':
 			strcpy(in_name, optarg);
 			cpld_info.slave = (uint8_t)strtoul(in_name, NULL, 0);
@@ -144,8 +135,13 @@ int main(int argc, char *argv[])
 
 	/* No different between LCMX02 and LCMX03 now */
 	cpld_info.intf = INTF_I2C;
-	if (cpld_intf_open(cpld_info.type, INTF_I2C, &cpld_info)) {
-		printf("CPLD_INTF Open failed!\n");
+	if (cpld_probe(INTF_I2C, &cpld_info)) {
+		printf("CPLD_INTF probe failed!\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if (cpld_scan(INTF_I2C)) {
+		printf("CPLD_INTF scan failed!\n");
 		exit(EXIT_FAILURE);
 	}
 

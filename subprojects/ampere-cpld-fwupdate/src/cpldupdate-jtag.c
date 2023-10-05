@@ -29,13 +29,8 @@ typedef struct {
 static void usage(FILE *fp, char **argv)
 {
 	fprintf(fp,
-		"\nampere_cpldupdate_i2c v0.0.2 Copyright 2022.\n\n"
+		"\nampere_cpldupdate_jtag v0.0.2 Copyright 2022.\n\n"
 		"Usage: %s -t <type> -d <jtag_device> [options]\n\n"
-		"Type:\n"
-		" 0 - LCMXO2\n"
-		" 1 - LCMXO3\n"
-		" 2 - ANLOGIC\n"
-		" 3 - YZBB\n"
 		"Jtag Device: Default is jtag0\n"
 		" 0 - /dev/jtag0\n"
 		" 1 - /dev/jtag1\n"
@@ -95,10 +90,6 @@ int main(int argc, char *argv[])
 			usage(stdout, argv);
 			exit(EXIT_SUCCESS);
 			break;
-		case 't':
-			strcpy(in_name, optarg);
-			cpld.type = (uint8_t)strtoul(in_name, NULL, 0);
-			break;
 		case 'd':
 			strcpy(in_name, optarg);
 			cpld_info.jtag_device =
@@ -140,9 +131,13 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	/* No different between LCMX02 and LCMX03 now */
-	if (cpld_intf_open(LCMXO2, INTF_JTAG, &cpld_info)) {
-		printf("CPLD_INTF Open failed!\n");
+	if (cpld_probe(INTF_JTAG, &cpld_info)) {
+		printf("CPLD_INTF probe failed!\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if (cpld_scan(INTF_JTAG)) {
+		printf("CPLD_INTF scan failed!\n");
 		exit(EXIT_FAILURE);
 	}
 

@@ -2248,11 +2248,9 @@ static int LCMXO2Family_cpld_checksum(FILE *jed_fd, uint32_t *crc)
 					  i2c_cpld_checksum(jed_fd, crc);
 }
 
-static int LCMXO2Family_cpld_dev_open(cpld_intf_t intf, uint8_t id,
-				      cpld_intf_info_t *attr)
+static int LCMXO2Family_cpld_dev_open(cpld_intf_t intf, cpld_intf_info_t *attr)
 {
 	int rc = 0;
-	UNUSED(id);
 
 	cpld.intf = intf;
 	if (attr != NULL) {
@@ -2307,7 +2305,8 @@ static int YZBBFamily_cpld_get_id(unsigned int *dev_id)
 /******************************************************************************/
 struct cpld_dev_info lattice_dev_list[] = {
   [0] = {
-    .name = "LCMXO2-Family",
+    .name = "LCMXO3LF-9400",
+    .dev_id = 0x612BE043,
     .cpld_open = LCMXO2Family_cpld_dev_open,
     .cpld_close = LCMXO2Family_cpld_dev_close,
     .cpld_ver = LCMXO2Family_cpld_get_ver,
@@ -2316,7 +2315,8 @@ struct cpld_dev_info lattice_dev_list[] = {
     .cpld_checksum = LCMXO2Family_cpld_checksum,
   },
   [1] = {
-    .name = "LCMXO3-Family",
+    .name = "LCMXO3LF-4300",
+    .dev_id = 0x612BC043,
     .cpld_open = LCMXO2Family_cpld_dev_open,
     .cpld_close = LCMXO2Family_cpld_dev_close,
     .cpld_ver = LCMXO2Family_cpld_get_ver,
@@ -2326,6 +2326,9 @@ struct cpld_dev_info lattice_dev_list[] = {
   },
   [2] = {
     .name = "YZBB-Family",
+    .dev_id = 0x42425A59,
+    .dev_id2 = 0x35383230,
+    .dev_id3 = 0x32303136,
     .cpld_open = LCMXO2Family_cpld_dev_open,
     .cpld_close = LCMXO2Family_cpld_dev_close,
     .cpld_ver = YZBBFamily_cpld_get_ver,
