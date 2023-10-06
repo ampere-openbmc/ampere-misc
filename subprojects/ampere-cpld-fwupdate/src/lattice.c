@@ -28,6 +28,8 @@ typedef struct {
 	unsigned int CF_Line;
 	unsigned int *UFM;
 	unsigned int UFM_Line;
+	unsigned int *EndCF;
+	unsigned int EndCF_Line;
 	unsigned int Version;
 	unsigned int CheckSum;
 	unsigned int FEARBits;
@@ -165,14 +167,17 @@ static void swap_bit_byte(uint8_t *data, unsigned int len)
 }
 
 /*check the size of cf and ufm*/
-static int jed_update_data_size(FILE *jed_fd, int *cf_size, int *ufm_size)
+static int jed_update_data_size(FILE *jed_fd, int *cf_size, int *ufm_size,
+				int *endcfg_size)
 {
 	const char TAG_CF_START[] = "L000";
 	int ReadLineSize = LATTICE_COL_SIZE + 2;
 	char tmp_buf[ReadLineSize];
 	unsigned int CFStart = 0;
 	unsigned int UFMStart = 0;
+	unsigned int CFEnd = 0;
 	const char TAG_UFM[] = "NOTE TAG DATA";
+	const char TAG_CF_END[] = "NOTE END CONFIG DATA";
 	int ret = 0;
 
 	while (NULL != fgets(tmp_buf, ReadLineSize, jed_fd)) {
@@ -180,6 +185,9 @@ static int jed_update_data_size(FILE *jed_fd, int *cf_size, int *ufm_size)
 			CFStart = 1;
 		} else if (startWith(tmp_buf, TAG_UFM /*"NOTE TAG DATA"*/)) {
 			UFMStart = 1;
+		} else if (startWith(tmp_buf,
+				     TAG_CF_END /*"NOTE END CONFIG DATA"*/)) {
+			CFEnd = 1;
 		}
 
 		if (CFStart) {
@@ -202,6 +210,17 @@ static int jed_update_data_size(FILE *jed_fd, int *cf_size, int *ufm_size)
 					UFMStart = 0;
 				}
 			}
+		} else if (CFEnd) {
+			if (!startWith(tmp_buf,
+				       TAG_CF_END /*"NOTE END CONFIG DATA"*/) &&
+			    !startWith(tmp_buf, "L") && strlen(tmp_buf) != 1) {
+				if (startWith(tmp_buf, "0") ||
+				    startWith(tmp_buf, "1")) {
+					(*endcfg_size)++;
+				} else {
+					CFEnd = 0;
+				}
+			}
 		}
 	}
 
@@ -214,12 +233,13 @@ static int jed_update_data_size(FILE *jed_fd, int *cf_size, int *ufm_size)
 }
 
 static int jed_file_parser(FILE *jed_fd, CPLDInfo *dev_info, int cf_size,
-			   int ufm_size)
+			   int ufm_size, int endcfg_size)
 {
 	/**TAG Information**/
 	const char TAG_QF[] = "QF";
 	const char TAG_CF_START[] = "L000";
 	const char TAG_UFM[] = "NOTE TAG DATA";
+	const char TAG_CF_END[] = "NOTE END CONFIG DATA";
 	const char TAG_ROW[] = "NOTE FEATURE";
 	const char TAG_CHECKSUM[] = "C";
 	const char TAG_USERCODE[] = "NOTE User Electronic";
@@ -232,6 +252,7 @@ static int jed_file_parser(FILE *jed_fd, CPLDInfo *dev_info, int cf_size,
 	char data_buf[LATTICE_COL_SIZE];
 	unsigned int CFStart = 0;
 	unsigned int UFMStart = 0;
+	unsigned int CFEnd = 0;
 	unsigned int ROWStart = 0;
 	unsigned int VersionStart = 0;
 	unsigned int ChkSUMStart = 0;
@@ -242,6 +263,8 @@ static int jed_file_parser(FILE *jed_fd, CPLDInfo *dev_info, int cf_size,
 	int ret = 0;
 	int cf_size_used = (cf_size * LATTICE_COL_SIZE) / 8; // unit: bytes
 	int ufm_size_used = (ufm_size * LATTICE_COL_SIZE) / 8; // unit: bytes
+	int endcfg_size_used =
+		(endcfg_size * LATTICE_COL_SIZE) / 8; // unit: bytes
 
 	dev_info->CF = (unsigned int *)malloc(cf_size_used);
 	memset(dev_info->CF, 0, cf_size_used);
@@ -251,8 +274,14 @@ static int jed_file_parser(FILE *jed_fd, CPLDInfo *dev_info, int cf_size,
 		memset(dev_info->UFM, 0, ufm_size_used);
 	}
 
+	if (endcfg_size_used) {
+		dev_info->EndCF = (unsigned int *)malloc(endcfg_size_used);
+		memset(dev_info->EndCF, 0, endcfg_size_used);
+	}
+
 	dev_info->CF_Line = 0;
 	dev_info->UFM_Line = 0;
+	dev_info->EndCF_Line = 0;
 
 	while (NULL != fgets(tmp_buf, ReadLineSize, jed_fd)) {
 		if (startWith(tmp_buf, TAG_QF /*"QF"*/)) {
@@ -282,6 +311,10 @@ static int jed_file_parser(FILE *jed_fd, CPLDInfo *dev_info, int cf_size,
 		} else if (startWith(tmp_buf, TAG_CHECKSUM /*"C"*/)) {
 			CPLD_DEBUG("[ChkSUMStart]\n");
 			ChkSUMStart = 1;
+		} else if (startWith(tmp_buf,
+				     TAG_CF_END /*"NOTE END CONFIG DATA"*/)) {
+			CPLD_DEBUG("[CFEnd]\n");
+			CFEnd = 1;
 		}
 
 		if (CFStart) {
@@ -378,7 +411,8 @@ static int jed_file_parser(FILE *jed_fd, CPLDInfo *dev_info, int cf_size,
 			memcpy(data_buf, &tmp_buf[1], copy_size);
 
 			dev_info->CheckSum = strtoul(data_buf, NULL, 16);
-			printf("JED Checksum: %X\n", dev_info->CheckSum);
+			printf("JED Checksum from file: %X\n",
+			       dev_info->CheckSum);
 		} else if (ROWStart) {
 			if (!startWith(tmp_buf, TAG_ROW /*"NOTE FEATURE"*/) &&
 			    strlen(tmp_buf) != 1) {
@@ -491,6 +525,67 @@ static int jed_file_parser(FILE *jed_fd, CPLDInfo *dev_info, int cf_size,
 						   __func__,
 						   dev_info->UFM_Line);
 					UFMStart = 0;
+				}
+			}
+		} else if (CFEnd) {
+			if (!startWith(tmp_buf,
+				       TAG_CF_END /*"NOTE END CONFIG DATA"*/) &&
+			    !startWith(tmp_buf, "L") && strlen(tmp_buf) != 1) {
+				if (startWith(tmp_buf, "0") ||
+				    startWith(tmp_buf, "1")) {
+					current_addr = (dev_info->EndCF_Line *
+							LATTICE_COL_SIZE) /
+						       32;
+					memset(data_buf, 0, sizeof(data_buf));
+					memcpy(data_buf, tmp_buf,
+					       LATTICE_COL_SIZE);
+					ShiftData(
+						data_buf,
+						&dev_info->EndCF[current_addr],
+						LATTICE_COL_SIZE);
+#ifdef VERBOSE_DEBUG
+					printf("dev_info->EndCF_Line : %d | %x %x %x %x\n",
+					       dev_info->EndCF_Line,
+					       dev_info->EndCF[current_addr],
+					       dev_info->EndCF[current_addr + 1],
+					       dev_info->EndCF[current_addr + 2],
+					       dev_info->EndCF[current_addr +
+							       3]);
+#endif
+					//each data has 128bits(4*unsigned int), so the for-loop need to be run 4 times
+					for (i = 0; i < sizeof(unsigned int);
+					     i++) {
+						JED_CheckSum +=
+							(dev_info->EndCF
+								 [current_addr +
+								  i] >>
+							 24) &
+							0xff;
+						JED_CheckSum +=
+							(dev_info->EndCF
+								 [current_addr +
+								  i] >>
+							 16) &
+							0xff;
+						JED_CheckSum +=
+							(dev_info->EndCF
+								 [current_addr +
+								  i] >>
+							 8) &
+							0xff;
+						JED_CheckSum +=
+							(dev_info->EndCF
+								 [current_addr +
+								  i]) &
+							0xff;
+					}
+
+					dev_info->EndCF_Line++;
+				} else {
+					CPLD_DEBUG("[%s]EndCF Line: %d\n",
+						   __func__,
+						   dev_info->EndCF_Line);
+					CFEnd = 0;
 				}
 			}
 		}
@@ -820,6 +915,7 @@ static int jtag_cpld_checksum(FILE *jed_fd, unsigned int *crc)
 {
 	CPLDInfo dev_info = { 0 };
 	int cf_size = 0;
+	int endcfg_size = 0;
 	int ufm_size = 0;
 	int ret;
 	unsigned int i, j;
@@ -839,7 +935,7 @@ static int jtag_cpld_checksum(FILE *jed_fd, unsigned int *crc)
 	fseek(jed_fd, 0, SEEK_SET);
 
 	//get update data size
-	ret = jed_update_data_size(jed_fd, &cf_size, &ufm_size);
+	ret = jed_update_data_size(jed_fd, &cf_size, &ufm_size, &endcfg_size);
 	if (ret < 0) {
 		printf("[%s] Update Data Size Error!\n", __func__);
 		goto error_exit;
@@ -849,7 +945,8 @@ static int jtag_cpld_checksum(FILE *jed_fd, unsigned int *crc)
 	fseek(jed_fd, 0, SEEK_SET);
 
 	//parse info from JED file and calculate checksum
-	ret = jed_file_parser(jed_fd, &dev_info, cf_size, ufm_size);
+	ret = jed_file_parser(jed_fd, &dev_info, cf_size, ufm_size,
+			      endcfg_size);
 	if (ret < 0) {
 		printf("[%s] JED file CheckSum Error!\n", __func__);
 		goto error_exit;
@@ -891,6 +988,22 @@ static int jtag_cpld_checksum(FILE *jed_fd, unsigned int *crc)
 			*crc += (buff[j] >> 16) & 0xff;
 			*crc += (buff[j] >> 8) & 0xff;
 			*crc += (buff[j]) & 0xff;
+		}
+	}
+
+	for (i = 0; i < dev_info.EndCF_Line; i++) {
+#ifdef VERBOSE_DEBUG
+		printf("[%d] ", i);
+		for (j = 0; j < 4; j++) {
+			printf("%x ", dev_info.EndCF[j]);
+		}
+		printf("\n");
+#endif
+		for (j = 0; j < sizeof(unsigned int); j++) {
+			*crc += (dev_info.EndCF[i + j] >> 24) & 0xff;
+			*crc += (dev_info.EndCF[i + j] >> 16) & 0xff;
+			*crc += (dev_info.EndCF[i + j] >> 8) & 0xff;
+			*crc += (dev_info.EndCF[i + j]) & 0xff;
 		}
 	}
 
@@ -936,6 +1049,10 @@ static int jtag_cpld_checksum(FILE *jed_fd, unsigned int *crc)
 error_exit:
 	if (NULL != dev_info.CF) {
 		free(dev_info.CF);
+	}
+
+	if (NULL != dev_info.EndCF) {
+		free(dev_info.EndCF);
 	}
 
 	if (NULL != dev_info.UFM) {
@@ -1133,6 +1250,7 @@ static int jtag_cpld_update(FILE *jed_fd, char *key, char is_signed)
 {
 	CPLDInfo dev_info = { 0 };
 	int cf_size = 0;
+	int endcfg_size = 0;
 	int ufm_size = 0;
 	int erase_type = 0;
 	int ret;
@@ -1150,7 +1268,7 @@ static int jtag_cpld_update(FILE *jed_fd, char *key, char is_signed)
 	fseek(jed_fd, 0, SEEK_SET);
 
 	//get update data size
-	ret = jed_update_data_size(jed_fd, &cf_size, &ufm_size);
+	ret = jed_update_data_size(jed_fd, &cf_size, &ufm_size, &endcfg_size);
 	if (ret < 0) {
 		printf("[%s] Update Data Size Error!\n", __func__);
 		goto error_exit;
@@ -1160,7 +1278,8 @@ static int jtag_cpld_update(FILE *jed_fd, char *key, char is_signed)
 	fseek(jed_fd, 0, SEEK_SET);
 
 	//parse info from JED file and calculate checksum
-	ret = jed_file_parser(jed_fd, &dev_info, cf_size, ufm_size);
+	ret = jed_file_parser(jed_fd, &dev_info, cf_size, ufm_size,
+			      endcfg_size);
 	if (ret < 0) {
 		printf("[%s] JED file CheckSum Error!\n", __func__);
 		goto error_exit;
@@ -1205,6 +1324,10 @@ static int jtag_cpld_update(FILE *jed_fd, char *key, char is_signed)
 error_exit:
 	if (NULL != dev_info.CF) {
 		free(dev_info.CF);
+	}
+
+	if (NULL != dev_info.EndCF) {
+		free(dev_info.EndCF);
 	}
 
 	if (NULL != dev_info.UFM) {
@@ -1569,6 +1692,7 @@ static int i2c_cpld_checksum(FILE *jed_fd, unsigned int *crc)
 
 	CPLDInfo dev_info = { 0 };
 	int cf_size = 0;
+	int endcfg_size = 0;
 	int ufm_size = 0;
 
 	CPLD_DEBUG("[%s]\n", __func__);
@@ -1579,7 +1703,7 @@ static int i2c_cpld_checksum(FILE *jed_fd, unsigned int *crc)
 	fseek(jed_fd, 0, SEEK_SET);
 
 	//get update data size
-	ret = jed_update_data_size(jed_fd, &cf_size, &ufm_size);
+	ret = jed_update_data_size(jed_fd, &cf_size, &ufm_size, &endcfg_size);
 	if (ret < 0) {
 		printf("[%s] Update Data Size Error!\n", __func__);
 		goto error_exit;
@@ -1589,7 +1713,8 @@ static int i2c_cpld_checksum(FILE *jed_fd, unsigned int *crc)
 	fseek(jed_fd, 0, SEEK_SET);
 
 	//parse info from JED file and calculate checksum
-	ret = jed_file_parser(jed_fd, &dev_info, cf_size, ufm_size);
+	ret = jed_file_parser(jed_fd, &dev_info, cf_size, ufm_size,
+			      endcfg_size);
 	if (ret < 0) {
 		printf("[%s] JED file CheckSum Error!\n", __func__);
 		goto error_exit;
@@ -1671,6 +1796,10 @@ static int i2c_cpld_checksum(FILE *jed_fd, unsigned int *crc)
 error_exit:
 	if (NULL != dev_info.CF) {
 		free(dev_info.CF);
+	}
+
+	if (NULL != dev_info.EndCF) {
+		free(dev_info.EndCF);
 	}
 
 	if (NULL != dev_info.UFM) {
@@ -1884,6 +2013,7 @@ static int i2c_cpld_update(FILE *jed_fd, char *key, char is_signed)
 {
 	CPLDInfo dev_info = { 0 };
 	int cf_size = 0;
+	int endcfg_size = 0;
 	int ufm_size = 0;
 	int erase_type = 0;
 	int ret;
@@ -1901,7 +2031,7 @@ static int i2c_cpld_update(FILE *jed_fd, char *key, char is_signed)
 	fseek(jed_fd, 0, SEEK_SET);
 
 	//get update data size
-	ret = jed_update_data_size(jed_fd, &cf_size, &ufm_size);
+	ret = jed_update_data_size(jed_fd, &cf_size, &ufm_size, &endcfg_size);
 	if (ret < 0) {
 		printf("[%s] Update Data Size Error!\n", __func__);
 		goto error_exit;
@@ -1911,7 +2041,8 @@ static int i2c_cpld_update(FILE *jed_fd, char *key, char is_signed)
 	fseek(jed_fd, 0, SEEK_SET);
 
 	//parse info from JED file and calculate checksum
-	ret = jed_file_parser(jed_fd, &dev_info, cf_size, ufm_size);
+	ret = jed_file_parser(jed_fd, &dev_info, cf_size, ufm_size,
+			      endcfg_size);
 	if (ret < 0) {
 		printf("[%s] JED file CheckSum Error!\n", __func__);
 		goto error_exit;
@@ -1956,6 +2087,10 @@ static int i2c_cpld_update(FILE *jed_fd, char *key, char is_signed)
 error_exit:
 	if (NULL != dev_info.CF) {
 		free(dev_info.CF);
+	}
+
+	if (NULL != dev_info.EndCF) {
+		free(dev_info.EndCF);
 	}
 
 	if (NULL != dev_info.UFM) {
