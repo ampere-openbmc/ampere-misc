@@ -3,6 +3,10 @@
 
 #define LATTICE_INS_LENGTH 0x08
 
+// MachXO3D Programming Definitions
+#define LCMXO3D_ERASE_BITS_LEN	  24
+#define LCMXO3D_INIT_ADD_BITS_LEN 24
+
 //lattice's cmd
 #define ISC_ADDRESS_SHIFT 0x01
 #define ISC_ERASE	  0x03
@@ -74,6 +78,6 @@ int lcmxo2_2000hc_cpld_verify(FILE *jed_fd);
 #define YZBB_UFM_DATA_LENGTH	 16
 #define YZBB_DEVICEID_LENGTH	 12
 
-#define LATTICE_MAX_DEVICE_SUPPORT 3
+#define LATTICE_MAX_DEVICE_SUPPORT 4
 extern struct cpld_dev_info lattice_dev_list[LATTICE_MAX_DEVICE_SUPPORT];
 #endif

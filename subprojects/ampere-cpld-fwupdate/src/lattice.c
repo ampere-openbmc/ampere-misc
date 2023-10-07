@@ -1123,6 +1123,69 @@ static int jtag_cpld_verify(CPLDInfo *dev_info)
 	return ret;
 }
 
+static int jtag_cpld_lcm3d_verify(CPLDInfo *dev_info)
+{
+	unsigned int i;
+	int result;
+	int current_addr = 0;
+	unsigned int buff[4] = { 0 };
+	int ret = 0;
+	unsigned int operand;
+
+	//  ast_jtag_run_test_idle(0, JTAG_STATE_TLRESET, 3);
+	ast_jtag_sir_xfer(JTAG_STATE_TLRESET, LATTICE_INS_LENGTH,
+			  LCMXO2_LSC_INIT_ADDRESS);
+
+	operand = 0x000100;
+	ast_jtag_tdi_xfer(JTAG_STATE_TLRESET, LCMXO3D_INIT_ADD_BITS_LEN,
+			  &operand);
+	usleep(1000);
+
+	//  ast_jtag_run_test_idle(0, JTAG_STATE_TLRESET, 3);
+	ast_jtag_sir_xfer(JTAG_STATE_TLRESET, LATTICE_INS_LENGTH,
+			  LCMXO2_LSC_READ_INCR_NV);
+	usleep(1000);
+
+	CPLD_DEBUG("[%s] dev_info->CF_Line: %d\n", __func__, dev_info->CF_Line);
+
+	for (i = 0; i < dev_info->CF_Line; i++) {
+		printf("Verify Data: %d/%d (%.2f%%) \r", (i + 1),
+		       dev_info->CF_Line,
+		       (((i + 1) / (float)dev_info->CF_Line) * 100));
+
+		current_addr = (i * LATTICE_COL_SIZE) / 32;
+
+		memset(buff, 0, sizeof(buff));
+
+		ast_jtag_tdo_xfer(JTAG_STATE_TLRESET, LATTICE_COL_SIZE, buff);
+
+		result = memcmp(buff, &dev_info->CF[current_addr],
+				sizeof(unsigned int));
+
+		if (result) {
+			CPLD_DEBUG(
+				"\nPage#%d (%x %x %x %x) did not match with CF (%x %x %x %x)\n",
+				i, buff[0], buff[1], buff[2], buff[3],
+				dev_info->CF[current_addr],
+				dev_info->CF[current_addr + 1],
+				dev_info->CF[current_addr + 2],
+				dev_info->CF[current_addr + 3]);
+			ret = -1;
+			break;
+		}
+	}
+
+	printf("\n");
+
+	if (-1 == ret) {
+		printf("\n[%s] Verify CPLD FW Error\n", __func__);
+	} else {
+		CPLD_DEBUG("\n[%s] Verify CPLD FW Pass\n", __func__);
+	}
+
+	return ret;
+}
+
 static int jtag_cpld_erase(int erase_type)
 {
 	unsigned int dr_data[4] = { 0 };
@@ -1173,6 +1236,48 @@ static int jtag_cpld_erase(int erase_type)
 	return ret;
 }
 
+static int jtag_cpld_lcm3d_erase()
+{
+	unsigned int dr_data[4] = { 0 };
+	unsigned int operand;
+	int ret = 0;
+
+	//  ast_jtag_run_test_idle(0, JTAG_STATE_TLRESET, 3);
+	//Erase the Flash
+	ast_jtag_sir_xfer(JTAG_STATE_TLRESET, LATTICE_INS_LENGTH,
+			  LCMXO2_ISC_ERASE);
+
+	CPLD_DEBUG("[%s] ERASE(0x0E)!\n", __func__);
+
+	operand = 0x000100;
+	ast_jtag_tdi_xfer(JTAG_STATE_TLRESET, LCMXO3D_ERASE_BITS_LEN, &operand);
+
+	dr_data[0] = jtag_check_device_status(CHECK_BUSY);
+
+	if (dr_data[0] != 0) {
+		printf("[%s] Device Busy, status = %x\n", __func__, dr_data[0]);
+		ret = -1;
+	} else {
+		ret = 0;
+	}
+
+	//Shift in LSC_READ_STATUS(0x3C) instruction
+	CPLD_DEBUG("[%s] READ_STATUS!\n", __func__);
+
+	dr_data[0] = jtag_check_device_status(CHECK_STATUS);
+
+	if (dr_data[0] != 0) {
+		printf("Erase Failed, status = %x\n", dr_data[0]);
+		ret = -1;
+	} else {
+		ret = 0;
+	}
+
+	CPLD_DEBUG("[%s] Erase Done!\n", __func__);
+
+	return ret;
+}
+
 static int jtag_cpld_program(CPLDInfo *dev_info)
 {
 	int ret = 0;
@@ -1184,6 +1289,83 @@ static int jtag_cpld_program(CPLDInfo *dev_info)
 	//Shift in LSC_INIT_ADDRESS(0x46) instruction
 	ast_jtag_sir_xfer(JTAG_STATE_TLRESET, LATTICE_INS_LENGTH,
 			  LCMXO2_LSC_INIT_ADDRESS);
+
+	CPLD_DEBUG("[%s] INIT_ADDRESS(0x46) \n", __func__);
+
+	ret = jtag_sendCFdata(dev_info);
+	if (ret < 0) {
+		goto error_exit;
+	}
+
+	if (dev_info->UFM_Line) {
+		//    ast_jtag_run_test_idle(0, JTAG_STATE_TLRESET, 3);
+		//program UFM
+		ast_jtag_sir_xfer(JTAG_STATE_TLRESET, LATTICE_INS_LENGTH,
+				  LCMXO2_LSC_INIT_ADDR_UFM);
+
+		ret = jtag_sendUFMdata(dev_info);
+		if (ret < 0) {
+			goto error_exit;
+		}
+	}
+
+	CPLD_DEBUG("[%s] Update CPLD done \n", __func__);
+
+	//Read the status bit
+	dr_data[0] = jtag_check_device_status(CHECK_STATUS);
+
+	if (dr_data[0] != 0) {
+		printf("[%s] Device Busy, status = %x\n", __func__, dr_data[0]);
+		ret = -1;
+		goto error_exit;
+	}
+
+	//Program USERCODE
+	CPLD_DEBUG("[%s] Program USERCODE\n", __func__);
+
+	//Write UserCode
+	dr_data[0] = dev_info->Version;
+	ast_jtag_tdi_xfer(JTAG_STATE_TLRESET, 32, dr_data);
+
+	CPLD_DEBUG("[%s] Write USERCODE: %x\n", __func__, dr_data[0]);
+
+	//  ast_jtag_run_test_idle(0, JTAG_STATE_TLRESET, 3);
+	ast_jtag_sir_xfer(JTAG_STATE_TLRESET, LATTICE_INS_LENGTH,
+			  LCMXO2_ISC_PROGRAM_USERCOD);
+	usleep(2000);
+
+	CPLD_DEBUG("[%s] PROGRAM USERCODE(0xC2)\n", __func__);
+
+	//Read the status bit
+	dr_data[0] = jtag_check_device_status(CHECK_STATUS);
+
+	if (dr_data[0] != 0) {
+		printf("[%s] Device Busy, status = %x\n", __func__, dr_data[0]);
+		ret = -1;
+		goto error_exit;
+	}
+
+	CPLD_DEBUG("[%s] READ_STATUS: %x\n", __func__, dr_data[0]);
+
+error_exit:
+	return ret;
+}
+
+static int jtag_cpld_lcm3d_program(CPLDInfo *dev_info)
+{
+	int ret = 0;
+	unsigned int dr_data[4] = { 0 };
+	unsigned int operand;
+
+	//Program CFG
+	CPLD_DEBUG("[%s] Program CFG \n", __func__);
+	//  ast_jtag_run_test_idle(0, JTAG_STATE_TLRESET, 3);
+	//Shift in LSC_INIT_ADDRESS(0x46) instruction
+	ast_jtag_sir_xfer(JTAG_STATE_TLRESET, LATTICE_INS_LENGTH,
+			  LCMXO2_LSC_INIT_ADDRESS);
+	operand = 0x000100;
+	ast_jtag_tdi_xfer(JTAG_STATE_TLRESET, LCMXO3D_INIT_ADD_BITS_LEN,
+			  &operand);
 
 	CPLD_DEBUG("[%s] INIT_ADDRESS(0x46) \n", __func__);
 
@@ -1310,6 +1492,90 @@ static int jtag_cpld_update(FILE *jed_fd, char *key, char is_signed)
 	}
 
 	ret = jtag_cpld_verify(&dev_info);
+	if (ret < 0) {
+		printf("[%s] Verify Failed!\n", __func__);
+		goto error_exit;
+	}
+
+	ret = jtag_cpld_end();
+	if (ret < 0) {
+		printf("[%s] Exit Transparent Mode Failed!\n", __func__);
+		goto error_exit;
+	}
+
+error_exit:
+	if (NULL != dev_info.CF) {
+		free(dev_info.CF);
+	}
+
+	if (NULL != dev_info.EndCF) {
+		free(dev_info.EndCF);
+	}
+
+	if (NULL != dev_info.UFM) {
+		free(dev_info.UFM);
+	}
+
+	return ret;
+}
+
+static int jtag_cpld_lcm3d_update(FILE *jed_fd, char *key, char is_signed)
+{
+	CPLDInfo dev_info = { 0 };
+	int cf_size = 0;
+	int ufm_size = 0;
+	int endcfg_size = 0;
+	int ret;
+
+	CPLD_DEBUG("[%s]\n", __func__);
+	UNUSED(key);
+	UNUSED(is_signed);
+	ret = jtag_cpld_check_id();
+	if (ret < 0) {
+		printf("[%s] Unknown Device ID!\n", __func__);
+		goto error_exit;
+	}
+
+	//set file pointer to the beginning
+	fseek(jed_fd, 0, SEEK_SET);
+
+	//get update data size
+	ret = jed_update_data_size(jed_fd, &cf_size, &ufm_size, &endcfg_size);
+	if (ret < 0) {
+		printf("[%s] Update Data Size Error!\n", __func__);
+		goto error_exit;
+	}
+
+	//set file pointer to the beginning
+	fseek(jed_fd, 0, SEEK_SET);
+
+	//parse info from JED file and calculate checksum
+	ret = jed_file_parser(jed_fd, &dev_info, cf_size, ufm_size,
+			      endcfg_size);
+	if (ret < 0) {
+		printf("[%s] JED file CheckSum Error!\n", __func__);
+		goto error_exit;
+	}
+
+	ret = jtag_cpld_start();
+	if (ret < 0) {
+		printf("[%s] Enter Transparent mode Error!\n", __func__);
+		goto error_exit;
+	}
+
+	ret = jtag_cpld_lcm3d_erase();
+	if (ret < 0) {
+		printf("[%s] Erase failed!\n", __func__);
+		goto error_exit;
+	}
+
+	ret = jtag_cpld_lcm3d_program(&dev_info);
+	if (ret < 0) {
+		printf("[%s] Program failed!\n", __func__);
+		goto error_exit;
+	}
+
+	ret = jtag_cpld_lcm3d_verify(&dev_info);
 	if (ret < 0) {
 		printf("[%s] Verify Failed!\n", __func__);
 		goto error_exit;
@@ -2236,6 +2502,13 @@ static int LCMXO2Family_cpld_update(FILE *jed_fd, char *key, char is_signed)
 		       i2c_cpld_update(jed_fd, key, is_signed);
 }
 
+static int LCMXO3D_cpld_update(FILE *jed_fd, char *key, char is_signed)
+{
+	return (cpld.intf == INTF_JTAG) ?
+		       jtag_cpld_lcm3d_update(jed_fd, key, is_signed) :
+		       i2c_cpld_update(jed_fd, key, is_signed);
+}
+
 static int LCMXO2Family_cpld_get_id(unsigned int *dev_id)
 {
 	return (cpld.intf == INTF_JTAG) ? jtag_cpld_get_id(dev_id) :
@@ -2325,6 +2598,16 @@ struct cpld_dev_info lattice_dev_list[] = {
     .cpld_checksum = LCMXO2Family_cpld_checksum,
   },
   [2] = {
+    .name = "LCMXO3D-9400",
+    .dev_id = 0x212E3043,
+    .cpld_open = LCMXO2Family_cpld_dev_open,
+    .cpld_close = LCMXO2Family_cpld_dev_close,
+    .cpld_ver = LCMXO2Family_cpld_get_ver,
+    .cpld_program = LCMXO3D_cpld_update,
+    .cpld_dev_id = LCMXO2Family_cpld_get_id,
+    .cpld_checksum = LCMXO2Family_cpld_checksum,
+  },
+  [3] = {
     .name = "YZBB-Family",
     .dev_id = 0x42425A59,
     .dev_id2 = 0x35383230,
