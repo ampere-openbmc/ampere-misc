@@ -1,0 +1,10 @@
+[Unit]
+Description=Altra Host Error Monitor
+
+[Service]
+Restart=always
+ExecStart=/usr/sbin/altra-host-error-monitor
+Type=simple
+
+[Install]
+WantedBy=multi-user.target

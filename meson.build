@@ -1,5 +1,5 @@
 project(
-    'amere-misc',
+    'ampere-misc',
     'cpp',
     version: '1.0',
     meson_version: '>=1.1.1',
@@ -36,4 +36,8 @@ endif
 
 if get_option('crash-capture-manager').enabled()
     subproject('crash-capture-manager')
+endif
+
+if get_option('altra-host-error-monitor').enabled()
+    subproject('altra-host-error-monitor')
 endif
