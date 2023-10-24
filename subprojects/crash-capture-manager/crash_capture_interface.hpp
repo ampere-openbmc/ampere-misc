@@ -59,7 +59,6 @@ class CrashCapture : public CrashCaptureInherit {
 	/** @brief Used to subscribe to numeric sensor event  **/
 	std::unique_ptr<sdbusplus::bus::match_t> numericSensorEventSignal;
 
-	bool isBertTrigger = false;
 	bool checkBertFlag = false;
 	bert_host_status hostStatus = HOST_UA;
 	std::unique_ptr<phosphor::Timer> bertHostOffTimer, bertHostOnTimer,

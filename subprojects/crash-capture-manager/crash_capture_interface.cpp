@@ -43,9 +43,8 @@ bool CrashCapture::triggerUE(bool value)
 bool CrashCapture::triggerProcess(bool value)
 {
 	info("Setting the triggerProcess field to {VALUE}", "VALUE", value);
-	if (value && (isBertTrigger || (hostStatus == HOST_FAILURE))) {
+	if (value) {
 		bertHandler(bus, HOST_ON);
-		isBertTrigger = false;
 		maskPowerControl(false);
 		bertPowerLockTimer->stop();
 		CrashCaptureInherit::triggerActions(
@@ -59,7 +58,6 @@ void CrashCapture::executeTransition(TriggerAction value)
 {
 	if (value == CrashCaptureInherit::TriggerAction::Bert) {
 		info("BERT is trigger");
-		isBertTrigger = true;
 		maskPowerControl(true);
 		bertPowerLockTimer->start(
 			std::chrono::milliseconds(BERT_POWER_LOCK_TIMEOUT));
