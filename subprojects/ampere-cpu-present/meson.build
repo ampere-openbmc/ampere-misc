@@ -22,7 +22,6 @@ executable(
     dependencies: [
         dependency('systemd'),
         dependency('sdbusplus'),
-        dependency('gpioplus'),
     ],
     install: true,
     install_dir: get_option('sbindir')
