@@ -53,3 +53,17 @@ option(
     value : 'disabled',
     description : 'Enable building altra-host-error-monitor'
 )
+
+option(
+    'flash-utils',
+    type : 'feature',
+    value : 'disabled',
+    description : 'Enable building flash-utils'
+)
+
+option(
+    'ac01-nvparm',
+    type : 'feature',
+    value : 'disabled',
+    description : 'Enable building ac01-nvparm'
+)

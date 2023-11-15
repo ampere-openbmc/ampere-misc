@@ -41,3 +41,11 @@ endif
 if get_option('altra-host-error-monitor').enabled()
     subproject('altra-host-error-monitor')
 endif
+
+if get_option('flash-utils').enabled()
+    subproject('flash-utils')
+endif
+
+if get_option('ac01-nvparm').enabled()
+    subproject('ac01-nvparm')
+endif
