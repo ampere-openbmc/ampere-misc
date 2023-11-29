@@ -204,19 +204,24 @@ void CrashCapture::handleBmcUnavailable(void)
 	constexpr auto hostStateInterface = "xyz.openbmc_project.State.Host";
 	constexpr auto hostStatePath = "/xyz/openbmc_project/state/host0";
 
-	auto propVal = crashcapture::utils::getDbusProperty(bus, hostStateSrv,
-							    hostStatePath,
-							    hostStateInterface,
-							    "CurrentHostState");
-	const auto &currHostState = std::get<std::string>(propVal);
-	if ((currHostState == "xyz.openbmc_project.State.Host.HostState.Off")) {
-		info("Host is off. Read SPI to check valid BERT");
-		bertHandler(bus, HOST_OFF);
-	} else if ((currHostState ==
-		    "xyz.openbmc_project.State.Host.HostState.Running")) {
-		handleBertHostOnEvent();
-	} else {
-		info("Host is in unavailable state");
+	try {
+		auto propVal = crashcapture::utils::getDbusProperty(
+			bus, hostStateSrv, hostStatePath, hostStateInterface,
+			"CurrentHostState");
+		const auto &currHostState = std::get<std::string>(propVal);
+		if ((currHostState ==
+		     "xyz.openbmc_project.State.Host.HostState.Off")) {
+			info("Host is off. Read SPI to check valid BERT");
+			bertHandler(bus, HOST_OFF);
+		} else if ((currHostState ==
+			    "xyz.openbmc_project.State.Host.HostState.Running")) {
+			handleBertHostOnEvent();
+		} else {
+			info("Host is in unavailable state");
+		}
+	} catch (const std::exception &e) {
+		error("Failed to get CurrentHostState. ERROR = {ERR_EXCEP}",
+		      "ERR_EXCEP", e.what());
 	}
 }
 

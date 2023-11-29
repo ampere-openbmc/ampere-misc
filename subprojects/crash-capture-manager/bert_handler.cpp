@@ -486,22 +486,28 @@ int bertHandler(sdbusplus::bus::bus &bus, bert_host_state state)
 {
 	int ret = 0;
 
-	if (!std::filesystem::is_directory(BERT_LOG_DIR)) {
-		std::filesystem::create_directories(BERT_LOG_DIR);
-	}
-	if (!std::filesystem::is_directory(CRASHDUMP_LOG_PATH)) {
-		std::filesystem::create_directories(CRASHDUMP_LOG_PATH);
-	}
+	try {
+		if (!std::filesystem::is_directory(BERT_LOG_DIR)) {
+			std::filesystem::create_directories(BERT_LOG_DIR);
+		}
+		if (!std::filesystem::is_directory(CRASHDUMP_LOG_PATH)) {
+			std::filesystem::create_directories(CRASHDUMP_LOG_PATH);
+		}
 
-	if (enableAccessHostSpiNor()) {
-		error("Cannot enable access SPI-NOR");
-		return -1;
-	}
+		if (enableAccessHostSpiNor()) {
+			error("Cannot enable access SPI-NOR");
+			return -1;
+		}
 
-	ret = handshakeSPIHandler(bus, state);
+		ret = handshakeSPIHandler(bus, state);
 
-	if (disableAccessHostSpiNor()) {
-		error("Cannot disable access SPI-NOR");
+		if (disableAccessHostSpiNor()) {
+			error("Cannot disable access SPI-NOR");
+			return -1;
+		}
+	} catch (const std::exception &e) {
+		error("Failed bertHandler. ERROR = {ERR_EXCEP}", "ERR_EXCEP",
+		      e.what());
 		return -1;
 	}
 
