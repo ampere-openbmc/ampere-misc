@@ -16,12 +16,14 @@
 #include <sys/mman.h>
 #include <pthread.h>
 #include "cpld.h"
+#include "cpu.h"
 
 typedef struct {
 	int program; /* enable/disable program  */
 	int erase; /* enable/disable erase flag */
 	int get_version; /* get cpld version flag */
 	int get_device; /* get cpld ID code flag */
+	int get_cpuid; /* get CPU ID code flag */
 	int checksum; /* get checksum flag */
 	int type;
 } cpld_t;
@@ -39,18 +41,20 @@ static void usage(FILE *fp, char **argv)
 		" -p | --program                Erase, program and verify cpld\n"
 		" -v | --get-cpld-version       Get current cpld version\n"
 		" -i | --get-cpld-idcode        Get cpld idcode\n"
+		" -u | --get-cpu-idcode         Get cpu idcode\n"
 		" -c | --checksum               Calculate CPLD checksum\n"
 		"",
 		argv[0]);
 }
 
-static const char short_options[] = "hvip:c:t:d:";
+static const char short_options[] = "hviup:c:t:d:";
 
 static const struct option long_options[] = {
 	{ "help", no_argument, NULL, 'h' },
 	{ "program", required_argument, NULL, 'p' },
 	{ "get-cpld-version", no_argument, NULL, 'v' },
 	{ "get-cpld-idcode", no_argument, NULL, 'i' },
+	{ "get-cpu-idcode", no_argument, NULL, 'u' },
 	{ "checksum", required_argument, NULL, 'c' },
 	{ 0, 0, 0, 0 }
 };
@@ -116,6 +120,9 @@ int main(int argc, char *argv[])
 		case 'i':
 			cpld.get_device = 1;
 			break;
+		case 'u':
+			cpld.get_cpuid = 1;
+			break;
 		case 'c':
 			cpld.checksum = 1;
 			strcpy(in_name, optarg);
@@ -129,6 +136,19 @@ int main(int argc, char *argv[])
 			usage(stdout, argv);
 			exit(EXIT_FAILURE);
 		}
+	}
+
+	if (cpld.get_cpuid) {
+		if (cpu_probe(cpld_info.jtag_device)) {
+			printf("CPU probe failed!\n");
+			exit(EXIT_FAILURE);
+		}
+
+		if (cpu_get_id()) {
+			printf("CPU IDcode: NA\n");
+		}
+		cpu_close();
+		exit(EXIT_SUCCESS);
 	}
 
 	if (cpld_probe(INTF_JTAG, &cpld_info)) {
