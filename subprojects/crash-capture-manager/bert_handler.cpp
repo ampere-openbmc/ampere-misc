@@ -138,7 +138,7 @@ static void bertClaimSPITimeOutHdl(void)
 	handshakeSPI(STOP_HS);
 }
 
-static int enableAccessHostSpiNor(void)
+static int enableAccessHostSpiNor(bert_host_state state)
 {
 	std::stringstream pidStr;
 	int ret = 0;
@@ -158,26 +158,41 @@ static int enableAccessHostSpiNor(void)
 		return ret;
 	}
 
+	if (state == HOST_OFF) {
+		cmd = std::string(HANDSHAKE_SPI_SCRIPT) + " start_handshake " +
+		      pidStr.str();
+		ret = system(cmd.c_str());
+		if (ret) {
+			error("Cannot start handshake SPI-NOR");
+			return ret;
+		}
+	}
+
 	return ret;
 }
 
-static int disableAccessHostSpiNor(void)
+static int disableAccessHostSpiNor(bert_host_state state)
 {
 	std::stringstream pidStr;
 	int ret = 0;
 
 	pidStr << getpid();
 	std::string cmd =
-		std::string(HANDSHAKE_SPI_SCRIPT) + " unbind " + pidStr.str();
-	ret = system(cmd.c_str());
-	if (ret) {
-		error("Cannot unbind SPI-NOR resource");
-	}
-	cmd = std::string(HANDSHAKE_SPI_SCRIPT) + " unlock " + pidStr.str();
+		std::string(HANDSHAKE_SPI_SCRIPT) + " unlock " + pidStr.str();
 	ret = system(cmd.c_str());
 	if (ret) {
 		error("Cannot unlock SPI-NOR resource");
 		return ret;
+	}
+
+	if (state == HOST_OFF) {
+		cmd = std::string(HANDSHAKE_SPI_SCRIPT) + " stop_handshake " +
+		      pidStr.str();
+		ret = system(cmd.c_str());
+		if (ret) {
+			error("Cannot stop handshake SPI-NOR");
+			return ret;
+		}
 	}
 
 	return ret;
@@ -349,9 +364,9 @@ static int initSPIDeviceRetry(bert_host_state state, int *fd, int num_retry)
 	while (i > 0) {
 		if (!initSPIDevice(state, fd))
 			return 0;
-		disableAccessHostSpiNor();
+		disableAccessHostSpiNor(state);
 		sleep(0.5);
-		enableAccessHostSpiNor();
+		enableAccessHostSpiNor(state);
 		i--;
 	}
 	return -1;
@@ -494,14 +509,14 @@ int bertHandler(sdbusplus::bus::bus &bus, bert_host_state state)
 			std::filesystem::create_directories(CRASHDUMP_LOG_PATH);
 		}
 
-		if (enableAccessHostSpiNor()) {
+		if (enableAccessHostSpiNor(state)) {
 			error("Cannot enable access SPI-NOR");
 			return -1;
 		}
 
 		ret = handshakeSPIHandler(bus, state);
 
-		if (disableAccessHostSpiNor()) {
+		if (disableAccessHostSpiNor(state)) {
 			error("Cannot disable access SPI-NOR");
 			return -1;
 		}

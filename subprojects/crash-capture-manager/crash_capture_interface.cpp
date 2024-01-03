@@ -44,7 +44,7 @@ bool CrashCapture::triggerProcess(bool value)
 {
 	info("Setting the triggerProcess field to {VALUE}", "VALUE", value);
 	if (value) {
-		bertHandler(bus, HOST_ON);
+		bertHandler(bus, HOST_OFF);
 		maskPowerControl(false);
 		bertPowerLockTimer->stop();
 		CrashCaptureInherit::triggerActions(
