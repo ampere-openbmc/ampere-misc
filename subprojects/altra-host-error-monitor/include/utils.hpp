@@ -45,187 +45,200 @@ namespace ampere
 {
 namespace utils
 {
-	using namespace phosphor::logging;
+using namespace phosphor::logging;
 
-	namespace fs = std::filesystem;
-	static u_int8_t NUM_SOCKET = 2;
+namespace fs = std::filesystem;
+static u_int8_t NUM_SOCKET = 2;
 
-	std::string hwmonRootDir[2] = {
-		"/sys/bus/platform/devices/smpro-misc.2.auto",
-		"/sys/bus/platform/devices/smpro-misc.5.auto"
-	};
+std::string hwmonRootDir[2] = {"/sys/bus/platform/devices/smpro-misc.2.auto",
+                               "/sys/bus/platform/devices/smpro-misc.5.auto"};
 
-	static std::string getAbsolutePath(u_int8_t socket,
-					   std::string fileName)
-	{
-		if (hwmonRootDir[socket] != "") {
-			return hwmonRootDir[socket] + fileName;
-		}
+static std::string getAbsolutePath(u_int8_t socket, std::string fileName)
+{
+    if (hwmonRootDir[socket] != "")
+    {
+        return hwmonRootDir[socket] + fileName;
+    }
 
-		return "";
-	}
+    return "";
+}
 
-	/** @brief Parsing config JSON file  */
-	Json parseConfigFile(const std::string configFile)
-	{
-		std::ifstream jsonFile(configFile);
+/** @brief Parsing config JSON file  */
+Json parseConfigFile(const std::string configFile)
+{
+    std::ifstream jsonFile(configFile);
 
-		if (!jsonFile.is_open()) {
-			log<level::ERR>("config JSON file not found",
-					entry("FILENAME = %s",
-					      configFile.c_str()));
-			throw std::exception{};
-		}
+    if (!jsonFile.is_open())
+    {
+        log<level::ERR>("config JSON file not found",
+                        entry("FILENAME = %s", configFile.c_str()));
+        throw std::exception{};
+    }
 
-		auto data = Json::parse(jsonFile, nullptr, false);
-		if (data.is_discarded()) {
-			log<level::ERR>("config readings JSON parser failure",
-					entry("FILENAME = %s",
-					      configFile.c_str()));
-			throw std::exception{};
-		}
+    auto data = Json::parse(jsonFile, nullptr, false);
+    if (data.is_discarded())
+    {
+        log<level::ERR>("config readings JSON parser failure",
+                        entry("FILENAME = %s", configFile.c_str()));
+        throw std::exception{};
+    }
 
-		return data;
-	}
+    return data;
+}
 
-	static int parsePlatformConfiguration()
-	{
-		const static u_int8_t MSG_BUFFER_LENGTH = 128;
-		char buff[MSG_BUFFER_LENGTH] = { '\0' };
-		auto data = parseConfigFile(ALTRA_MISC_CONFIG_FILE);
-		std::string desc = "";
-		int num = 0;
+static int parsePlatformConfiguration()
+{
+    const static u_int8_t MSG_BUFFER_LENGTH = 128;
+    char buff[MSG_BUFFER_LENGTH] = {'\0'};
+    auto data = parseConfigFile(ALTRA_MISC_CONFIG_FILE);
+    std::string desc = "";
+    int num = 0;
 
-		num = data.value("number_socket", -1);
-		if (num < 1) {
-			log<level::WARNING>(
-				"number_socket configuration is"
-				"invalid. Using default configuration!");
-		} else {
-			NUM_SOCKET = num;
-		}
+    num = data.value("number_socket", -1);
+    if (num < 1)
+    {
+        log<level::WARNING>("number_socket configuration is"
+                            "invalid. Using default configuration!");
+    }
+    else
+    {
+        NUM_SOCKET = num;
+    }
 
-		desc = data.value("s0_errmon_path", "");
-		if (desc.empty()) {
-			log<level::WARNING>(
-				"s0_errmon_path configuration is invalid."
-				" Using default configuration!");
-		} else {
-			hwmonRootDir[0] = desc;
-		}
-		snprintf(buff, MSG_BUFFER_LENGTH, "S0 SMPro errmon path: %s\n",
-			 hwmonRootDir[0].c_str());
-		log<level::INFO>(buff);
+    desc = data.value("s0_errmon_path", "");
+    if (desc.empty())
+    {
+        log<level::WARNING>("s0_errmon_path configuration is invalid."
+                            " Using default configuration!");
+    }
+    else
+    {
+        hwmonRootDir[0] = desc;
+    }
+    snprintf(buff, MSG_BUFFER_LENGTH, "S0 SMPro errmon path: %s\n",
+             hwmonRootDir[0].c_str());
+    log<level::INFO>(buff);
 
-		desc = data.value("s1_errmon_path", "");
-		if (desc.empty()) {
-			log<level::WARNING>(
-				"s1_errmon_path configuration is invalid."
-				"Using default configuration!");
-		} else {
-			hwmonRootDir[1] = desc;
-		}
-		snprintf(buff, MSG_BUFFER_LENGTH, "S1 SMPro errmon path: %s\n",
-			 hwmonRootDir[1].c_str());
-		log<level::INFO>(buff);
+    desc = data.value("s1_errmon_path", "");
+    if (desc.empty())
+    {
+        log<level::WARNING>("s1_errmon_path configuration is invalid."
+                            "Using default configuration!");
+    }
+    else
+    {
+        hwmonRootDir[1] = desc;
+    }
+    snprintf(buff, MSG_BUFFER_LENGTH, "S1 SMPro errmon path: %s\n",
+             hwmonRootDir[1].c_str());
+    log<level::INFO>(buff);
 
-		return 0;
-	}
+    return 0;
+}
 
-	static int initHwmonRootPath()
-	{
-		bool foundRootPath = false;
+static int initHwmonRootPath()
+{
+    bool foundRootPath = false;
 
-		/* parse errmon patch */
-		parsePlatformConfiguration();
+    /* parse errmon patch */
+    parsePlatformConfiguration();
 
-		for (u_int8_t socket = 0; socket < NUM_SOCKET; socket++) {
-			auto path = fs::path(hwmonRootDir[socket]);
-			if (fs::exists(path) && fs::is_directory(path)) {
-				path = fs::path(hwmonRootDir[socket] +
-						"/error_core_ce");
-				if (fs::exists(path)) {
-					foundRootPath = true;
-					continue;
-				}
-			}
-			hwmonRootDir[socket] = "";
-		}
-		if (foundRootPath) {
-			return 1;
-		}
+    for (u_int8_t socket = 0; socket < NUM_SOCKET; socket++)
+    {
+        auto path = fs::path(hwmonRootDir[socket]);
+        if (fs::exists(path) && fs::is_directory(path))
+        {
+            path = fs::path(hwmonRootDir[socket] + "/error_core_ce");
+            if (fs::exists(path))
+            {
+                foundRootPath = true;
+                continue;
+            }
+        }
+        hwmonRootDir[socket] = "";
+    }
+    if (foundRootPath)
+    {
+        return 1;
+    }
 
-		return 0;
-	}
+    return 0;
+}
 
-	static u_int64_t parseHexStrToUInt64(std::string str)
-	{
-		char *p;
+static u_int64_t parseHexStrToUInt64(std::string str)
+{
+    char* p;
 
-		u_int64_t n = strtoull(str.c_str(), &p, 16);
-		if (*p != 0) {
-			return 0;
-		}
+    u_int64_t n = strtoull(str.c_str(), &p, 16);
+    if (*p != 0)
+    {
+        return 0;
+    }
 
-		return n & 0xffffffffffffffff;
-	}
+    return n & 0xffffffffffffffff;
+}
 
-	static u_int32_t parseHexStrToUInt32(std::string str)
-	{
-		char *p;
+static u_int32_t parseHexStrToUInt32(std::string str)
+{
+    char* p;
 
-		long n = strtoul(str.c_str(), &p, 16);
-		if (*p != 0) {
-			return 0;
-		}
+    long n = strtoul(str.c_str(), &p, 16);
+    if (*p != 0)
+    {
+        return 0;
+    }
 
-		return n & 0xffffffff;
-	}
+    return n & 0xffffffff;
+}
 
-	static u_int16_t parseHexStrToUInt16(std::string str)
-	{
-		char *p;
+static u_int16_t parseHexStrToUInt16(std::string str)
+{
+    char* p;
 
-		long n = strtoul(str.c_str(), &p, 16);
-		if (*p != 0) {
-			return 0;
-		}
+    long n = strtoul(str.c_str(), &p, 16);
+    if (*p != 0)
+    {
+        return 0;
+    }
 
-		return n & 0xffff;
-	}
+    return n & 0xffff;
+}
 
-	static u_int8_t parseHexStrToUInt8(std::string str)
-	{
-		char *p;
+static u_int8_t parseHexStrToUInt8(std::string str)
+{
+    char* p;
 
-		long n = strtoul(str.c_str(), &p, 16);
-		if (*p != 0) {
-			return 0;
-		}
+    long n = strtoul(str.c_str(), &p, 16);
+    if (*p != 0)
+    {
+        return 0;
+    }
 
-		return n & 0xff;
-	}
+    return n & 0xff;
+}
 
-	static void swap2Byte(std::string &str)
-	{
-		int i, j;
-		int len = str.size();
+static void swap2Byte(std::string& str)
+{
+    int i, j;
+    int len = str.size();
 
-		for (i = 0, j = 1; j < len;) {
-			std::swap(str[i], str[j]);
-			i += 2;
-			j += 2;
-		}
-	}
+    for (i = 0, j = 1; j < len;)
+    {
+        std::swap(str[i], str[j]);
+        i += 2;
+        j += 2;
+    }
+}
 
-	static void reverseStr(std::string &str)
-	{
-		swap2Byte(str);
-		int len = str.size();
-		for (int i = 0; i < (len / 2); i++) {
-			std::swap(str[i], str[(len - i - 1)]);
-		}
-	}
+static void reverseStr(std::string& str)
+{
+    swap2Byte(str);
+    int len = str.size();
+    for (int i = 0; i < (len / 2); i++)
+    {
+        std::swap(str[i], str[(len - i - 1)]);
+    }
+}
 
 } /* namespace utils */
 } /* namespace ampere */

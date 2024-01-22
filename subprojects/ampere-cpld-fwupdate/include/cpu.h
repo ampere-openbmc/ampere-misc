@@ -2,29 +2,31 @@
 #define __CPU_H__
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
+#include "ast-jtag.h"
+#include "jtag.h"
+
+#include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
-#include <fcntl.h>
 #include <unistd.h>
-#include <errno.h>
-#include "ast-jtag.h"
-#include "jtag.h"
 
 int cpu_probe(int jtag_device);
 void cpu_close();
 int cpu_get_id();
 
-#define MAX_TAP		       2
+#define MAX_TAP 2
 #define IDCODE_REG_SIZE_IN_BIT 32
-#define BIT_COUNT	       (MAX_TAP * IDCODE_REG_SIZE_IN_BIT)
+#define BIT_COUNT (MAX_TAP * IDCODE_REG_SIZE_IN_BIT)
 #define JTAG_MAX_XFER_DATA_LEN 65535
 
 #ifndef MIN
@@ -41,9 +43,9 @@ int cpu_get_id();
  * JTAG_MAX_XFER_DATA_LEN bits will fail.
  */
 #define JTAG_MAX_XFER_DATA_LEN_BYTE_ALIGNED                                    \
-	(((JTAG_MAX_XFER_DATA_LEN)-1) & (~0x7))
+    (((JTAG_MAX_XFER_DATA_LEN)-1) & (~0x7))
 #define JTAG_MAX_XFER_DATA_LEN_BYTE_ALIGNED_DIV8                               \
-	((JTAG_MAX_XFER_DATA_LEN_BYTE_ALIGNED) >> 3)
+    ((JTAG_MAX_XFER_DATA_LEN_BYTE_ALIGNED) >> 3)
 
 /**
  * Defines JTAG Test Access Port states.
@@ -57,26 +59,27 @@ int cpu_get_id();
  * Fix those drivers to map as appropriate ... then pick some
  * sane set of numbers here (where 0/uninitialized == INVALID).
  */
-typedef enum tap_state {
-	TAP_INVALID = -1,
+typedef enum tap_state
+{
+    TAP_INVALID = -1,
 
-	/* Proper ARM recommended numbers */
-	TAP_DREXIT2 = 0x0,
-	TAP_DREXIT1 = 0x1,
-	TAP_DRSHIFT = 0x2,
-	TAP_DRPAUSE = 0x3,
-	TAP_IRSELECT = 0x4,
-	TAP_DRUPDATE = 0x5,
-	TAP_DRCAPTURE = 0x6,
-	TAP_DRSELECT = 0x7,
-	TAP_IREXIT2 = 0x8,
-	TAP_IREXIT1 = 0x9,
-	TAP_IRSHIFT = 0xa,
-	TAP_IRPAUSE = 0xb,
-	TAP_IDLE = 0xc,
-	TAP_IRUPDATE = 0xd,
-	TAP_IRCAPTURE = 0xe,
-	TAP_RESET = 0x0f,
+    /* Proper ARM recommended numbers */
+    TAP_DREXIT2 = 0x0,
+    TAP_DREXIT1 = 0x1,
+    TAP_DRSHIFT = 0x2,
+    TAP_DRPAUSE = 0x3,
+    TAP_IRSELECT = 0x4,
+    TAP_DRUPDATE = 0x5,
+    TAP_DRCAPTURE = 0x6,
+    TAP_DRSELECT = 0x7,
+    TAP_IREXIT2 = 0x8,
+    TAP_IREXIT1 = 0x9,
+    TAP_IRSHIFT = 0xa,
+    TAP_IRPAUSE = 0xb,
+    TAP_IDLE = 0xc,
+    TAP_IRUPDATE = 0xd,
+    TAP_IRCAPTURE = 0xe,
+    TAP_RESET = 0x0f,
 } tap_state_t;
 
 #ifdef __cplusplus

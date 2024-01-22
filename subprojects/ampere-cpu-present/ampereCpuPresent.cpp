@@ -18,21 +18,20 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/asio/io_service.hpp>
 #include <boost/container/flat_map.hpp>
-
 #include <sdbusplus/asio/connection.hpp>
+#include <sdbusplus/asio/object_server.hpp>
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/bus/match.hpp>
 #include <sdbusplus/message.hpp>
-#include <sdbusplus/asio/object_server.hpp>
 
 #include <array>
+#include <chrono>
 #include <cstdio>
 #include <fstream>
 #include <iostream>
 #include <memory>
-#include <string>
 #include <regex>
-#include <chrono>
+#include <string>
 #include <thread>
 
 bool addSoCInterfaces = false;
@@ -45,91 +44,98 @@ bool s1_present = false;
 
 std::shared_ptr<sdbusplus::asio::dbus_interface> hostPresenceS0 = nullptr;
 std::shared_ptr<sdbusplus::asio::dbus_interface> hostPresenceS1 = nullptr;
-const char *script_s0_present = "/usr/sbin/ampere_utils host present s0";
-const char *script_s1_present = "/usr/sbin/ampere_utils host present s1";
-constexpr const char *cpuInventoryPath =
-	"/xyz/openbmc_project/inventory/system/chassis/motherboard";
+const char* script_s0_present = "/usr/sbin/ampere_utils host present s0";
+const char* script_s1_present = "/usr/sbin/ampere_utils host present s1";
+constexpr const char* cpuInventoryPath =
+    "/xyz/openbmc_project/inventory/system/chassis/motherboard";
 
-std::string exec(const char *cmd)
+std::string exec(const char* cmd)
 {
-	std::array<char, 128> buffer;
-	std::string result;
-	std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
-	if (!pipe) {
-		std::cerr << "popen() failed!" << std::endl;
-		return "failed";
-	}
-	while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-		result += buffer.data();
-	}
-	return result;
+    std::array<char, 128> buffer;
+    std::string result;
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
+    if (!pipe)
+    {
+        std::cerr << "popen() failed!" << std::endl;
+        return "failed";
+    }
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr)
+    {
+        result += buffer.data();
+    }
+    return result;
 }
 
 void checkCpuPresent()
 {
-	try {
-		/* script_s0_present exit with 0 when S1 present */
-		std::size_t found = exec(script_s0_present).find("0");
-		if (found != std::string::npos) {
-			s0_present = true;
-		}
+    try
+    {
+        /* script_s0_present exit with 0 when S1 present */
+        std::size_t found = exec(script_s0_present).find("0");
+        if (found != std::string::npos)
+        {
+            s0_present = true;
+        }
 
-		found = exec(script_s1_present).find("0");
-		if (found != std::string::npos) {
-			s1_present = true;
-		}
-	} catch (const std::exception &e) {
-		std::cerr << e.what() << std::endl;
-	}
+        found = exec(script_s1_present).find("0");
+        if (found != std::string::npos)
+        {
+            s1_present = true;
+        }
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
 }
 
 void addCpuPresentInterfaces()
 {
-	/* Update CPU present status before add Present D-Bus interfaces*/
-	s0_present = false;
-	s1_present = false;
-	checkCpuPresent();
+    /* Update CPU present status before add Present D-Bus interfaces*/
+    s0_present = false;
+    s1_present = false;
+    checkCpuPresent();
 
-	try {
-		if (!addSoCInterfaces) {
-			if (s0_present) {
-				std::string socName = "CPU_1";
-				hostPresenceS0 = objectServer.add_interface(
-					cpuInventoryPath + std::string("/") +
-						socName,
-					"xyz.openbmc_project.Inventory.Item");
-				hostPresenceS0->register_property("PrettyName",
-								  socName);
-				hostPresenceS0->register_property("Present",
-								  true);
-				hostPresenceS0->initialize();
-			}
+    try
+    {
+        if (!addSoCInterfaces)
+        {
+            if (s0_present)
+            {
+                std::string socName = "CPU_1";
+                hostPresenceS0 = objectServer.add_interface(
+                    cpuInventoryPath + std::string("/") + socName,
+                    "xyz.openbmc_project.Inventory.Item");
+                hostPresenceS0->register_property("PrettyName", socName);
+                hostPresenceS0->register_property("Present", true);
+                hostPresenceS0->initialize();
+            }
 
-			if (s1_present) {
-				std::string socName = "CPU_2";
-				hostPresenceS1 = objectServer.add_interface(
-					cpuInventoryPath + std::string("/") +
-						socName,
-					"xyz.openbmc_project.Inventory.Item");
-				hostPresenceS1->register_property("PrettyName",
-								  socName);
-				hostPresenceS1->register_property("Present",
-								  true);
-				hostPresenceS1->initialize();
-			}
-			addSoCInterfaces = true;
-		}
-	} catch (const std::exception &e) {
-		std::cerr << e.what() << '\n';
-	}
+            if (s1_present)
+            {
+                std::string socName = "CPU_2";
+                hostPresenceS1 = objectServer.add_interface(
+                    cpuInventoryPath + std::string("/") + socName,
+                    "xyz.openbmc_project.Inventory.Item");
+                hostPresenceS1->register_property("PrettyName", socName);
+                hostPresenceS1->register_property("Present", true);
+                hostPresenceS1->initialize();
+            }
+            addSoCInterfaces = true;
+        }
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-	conn->request_name("xyz.openbmc_project.Ampere.Cpu");
-	objectServer.add_manager("/xyz/openbmc_project/inventory");
-	addCpuPresentInterfaces();
-	io.run();
+    conn->request_name("xyz.openbmc_project.Ampere.Cpu");
+    objectServer.add_manager("/xyz/openbmc_project/inventory");
+    addCpuPresentInterfaces();
+    io.run();
 
-	return 0;
+    return 0;
 }
