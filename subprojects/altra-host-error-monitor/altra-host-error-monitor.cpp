@@ -370,7 +370,7 @@ const static constexpr u_int8_t NUMBER_OF_EVENTS = sizeof(eventTypeTable) /
                                                    sizeof(EventData);
 u_int16_t curEventMask[NUMBER_OF_EVENTS] = {};
 
-std::unique_ptr<phosphor::Timer> rasTimer __attribute__((init_priority(101)));
+std::unique_ptr<sdbusplus::Timer> rasTimer __attribute__((init_priority(101)));
 
 std::unique_ptr<sdbusplus::bus::match::match> hostStateMatch;
 
@@ -1589,7 +1589,7 @@ static void getErrorsAndEvents()
 static void
     handleHostStateMatch(std::shared_ptr<sdbusplus::asio::connection>& conn)
 {
-    rasTimer = std::make_unique<phosphor::Timer>(getErrorsAndEvents);
+    rasTimer = std::make_unique<sdbusplus::Timer>(getErrorsAndEvents);
 
     auto startEventMatcherCallback = [](sdbusplus::message::message& msg) {
         boost::container::flat_map<std::string, std::variant<std::string>>
@@ -1649,7 +1649,7 @@ int main()
      * Add timer to keep sd_event is warm, if this timer is removed,
      * ras timer does not is called.
      */
-    phosphor::Timer t2([]() { ; });
+    sdbusplus::Timer t2([]() { ; });
     t2.start(std::chrono::microseconds(500000), true);
 
     auto conn = std::make_shared<sdbusplus::asio::connection>(io);
