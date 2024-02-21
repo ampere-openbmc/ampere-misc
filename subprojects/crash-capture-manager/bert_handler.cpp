@@ -46,12 +46,12 @@ std::string bertFileNvpInfo = "latest.dump";
 static void bertClaimSPITimeOutHdl(void);
 static int handshakeSPI(bert_handshake_cmd val);
 
-std::unique_ptr<phosphor::Timer> bertClaimSPITimer;
+std::unique_ptr<sdbusplus::Timer> bertClaimSPITimer;
 bool isMasked = false;
 
 void bertClaimSPITimeOut()
 {
-    bertClaimSPITimer = std::make_unique<phosphor::Timer>(
+    bertClaimSPITimer = std::make_unique<sdbusplus::Timer>(
         [&](void) { bertClaimSPITimeOutHdl(); });
 }
 

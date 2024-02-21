@@ -194,11 +194,11 @@ void CrashCapture::bertPowerLockTimeOutHdl(void)
 
 void CrashCapture::initBertHostOnEvent(void)
 {
-    bertHostOnTimer = std::make_unique<phosphor::Timer>(
+    bertHostOnTimer = std::make_unique<sdbusplus::Timer>(
         [&](void) { bertHostOnTimeOutHdl(); });
-    bertHostFailTimer = std::make_unique<phosphor::Timer>(
+    bertHostFailTimer = std::make_unique<sdbusplus::Timer>(
         [&](void) { bertHostFailTimeOutHdl(); });
-    bertPowerLockTimer = std::make_unique<phosphor::Timer>(
+    bertPowerLockTimer = std::make_unique<sdbusplus::Timer>(
         [&](void) { bertPowerLockTimeOutHdl(); });
 }
 

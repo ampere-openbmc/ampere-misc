@@ -64,7 +64,7 @@ class CrashCapture : public CrashCaptureInherit
 
     bool checkBertFlag = false;
     bert_host_status hostStatus = HOST_UA;
-    std::unique_ptr<phosphor::Timer> bertHostOffTimer, bertHostOnTimer,
+    std::unique_ptr<sdbusplus::Timer> bertHostOffTimer, bertHostOnTimer,
         bertHostFailTimer, bertPowerLockTimer;
 
     void executeTransition(TriggerAction value);
