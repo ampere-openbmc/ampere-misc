@@ -1,6 +1,6 @@
 [Unit]
 Description= Crash Capture Management
-After=xyz.openbmc_project.State.Host@0.service
+After=multi-user.target
 
 [Service]
 ExecStart=@bindir@/crash-capture-manager
