@@ -13,6 +13,7 @@ deps = [dependency('libsystemd', version : '>=221'),
         dependency('systemd'),
         dependency('sdbusplus'),
         dependency('threads'),
+        dependency('phosphor-logging'),
         ]
 
 executable(

@@ -16,7 +16,6 @@
 
 #include "power_cap_interface.hpp"
 
-#include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/exception.hpp>
 #include <sdbusplus/server.hpp>
@@ -35,7 +34,6 @@ namespace Power
 namespace Cap
 {
 PHOSPHOR_LOG2_USING;
-using namespace phosphor::logging;
 using namespace sdbusplus::xyz::openbmc_project::Common::Error;
 
 constexpr auto SYSTEMD_SERVICE = "org.freedesktop.systemd1";

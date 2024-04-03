@@ -1,7 +1,6 @@
 #include "utils.hpp"
 
-#include <phosphor-logging/elog-errors.hpp>
-#include <phosphor-logging/log.hpp>
+#include <phosphor-logging/lg2.hpp>
 
 #include <algorithm>
 #include <array>
@@ -18,7 +17,6 @@ namespace crashcapture
 {
 namespace utils
 {
-using namespace phosphor::logging;
 
 static time_t prevTs = 0;
 static int indexId = 0;
@@ -66,10 +64,10 @@ Value getDbusProperty(sdbusplus::bus::bus& bus, const std::string& service,
     }
     catch (const std::exception& e)
     {
-        log<level::ERR>("Failed to get property",
-                        entry("PROPERTY=%s", property.c_str()),
-                        entry("PATH=%s", objPath.c_str()),
-                        entry("INTERFACE=%s", interface.c_str()));
+        lg2::error("Failed to get property PROPERTY={PROPERTY}, PATH={PATH},"
+                   "INTERFACE={INTERFACE}",
+                   "PROPERTY", property, "PATH", objPath, "INTERFACE",
+                   interface);
     }
 
     return value;

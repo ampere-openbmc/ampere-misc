@@ -5,8 +5,6 @@
 #include "bert.hpp"
 #include "utils.hpp"
 
-#include <phosphor-logging/elog-errors.hpp>
-#include <phosphor-logging/elog.hpp>
 #include <phosphor-logging/lg2.hpp>
 #include <xyz/openbmc_project/Common/error.hpp>
 
@@ -16,7 +14,6 @@
 namespace crashcapture
 {
 PHOSPHOR_LOG2_USING;
-using namespace phosphor::logging;
 
 CrashCapture::CrashCapture(sdbusplus::bus::bus& bus, const char* objPath) :
     CrashCaptureInherit(bus, objPath), bus(bus), objectPath(objPath)

@@ -10,6 +10,7 @@ project('ampere-cpld-fwupdate', 'c',
 add_project_arguments('-Wno-psabi', language: 'c')
 
 deps = [dependency('systemd'),
+dependency('phosphor-logging'),
 ]
 
 executable('ampere_cpldupdate_jtag',

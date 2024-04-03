@@ -15,6 +15,7 @@ executable('ampere_trst_wa',
            implicit_include_directories: false,
            dependencies: [
                 dependency('systemd'),
+                dependency('phosphor-logging'),
                 dependency('libgpiod')
                 ],
            install: true,

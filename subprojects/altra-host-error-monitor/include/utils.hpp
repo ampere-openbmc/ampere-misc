@@ -20,9 +20,7 @@
 #include <boost/container/flat_map.hpp>
 #include <boost/container/flat_set.hpp>
 #include <nlohmann/json.hpp>
-#include <phosphor-logging/elog-errors.hpp>
-#include <phosphor-logging/elog.hpp>
-#include <phosphor-logging/log.hpp>
+#include <phosphor-logging/lg2.hpp>
 
 #include <filesystem>
 #include <fstream>
@@ -45,7 +43,6 @@ namespace ampere
 {
 namespace utils
 {
-using namespace phosphor::logging;
 
 namespace fs = std::filesystem;
 static u_int8_t NUM_SOCKET = 2;
@@ -70,16 +67,16 @@ Json parseConfigFile(const std::string configFile)
 
     if (!jsonFile.is_open())
     {
-        log<level::ERR>("config JSON file not found",
-                        entry("FILENAME = %s", configFile.c_str()));
+        lg2::error("config JSON file not found {FILENAME}", "FILENAME",
+                   configFile);
         throw std::exception{};
     }
 
     auto data = Json::parse(jsonFile, nullptr, false);
     if (data.is_discarded())
     {
-        log<level::ERR>("config readings JSON parser failure",
-                        entry("FILENAME = %s", configFile.c_str()));
+        lg2::error("config readings JSON parser failure {FILENAME}", "FILENAME",
+                   configFile);
         throw std::exception{};
     }
 
@@ -97,8 +94,8 @@ static int parsePlatformConfiguration()
     num = data.value("number_socket", -1);
     if (num < 1)
     {
-        log<level::WARNING>("number_socket configuration is"
-                            "invalid. Using default configuration!");
+        lg2::warning("number_socket configuration is"
+                     "invalid. Using default configuration!");
     }
     else
     {
@@ -108,8 +105,8 @@ static int parsePlatformConfiguration()
     desc = data.value("s0_errmon_path", "");
     if (desc.empty())
     {
-        log<level::WARNING>("s0_errmon_path configuration is invalid."
-                            " Using default configuration!");
+        lg2::warning("s0_errmon_path configuration is invalid."
+                     " Using default configuration!");
     }
     else
     {
@@ -117,13 +114,13 @@ static int parsePlatformConfiguration()
     }
     snprintf(buff, MSG_BUFFER_LENGTH, "S0 SMPro errmon path: %s\n",
              hwmonRootDir[0].c_str());
-    log<level::INFO>(buff);
+    lg2::info("{BUFF}", "BUFF", buff);
 
     desc = data.value("s1_errmon_path", "");
     if (desc.empty())
     {
-        log<level::WARNING>("s1_errmon_path configuration is invalid."
-                            "Using default configuration!");
+        lg2::warning("s1_errmon_path configuration is invalid."
+                     "Using default configuration!");
     }
     else
     {
@@ -131,7 +128,7 @@ static int parsePlatformConfiguration()
     }
     snprintf(buff, MSG_BUFFER_LENGTH, "S1 SMPro errmon path: %s\n",
              hwmonRootDir[1].c_str());
-    log<level::INFO>(buff);
+    lg2::info("{BUFF}", "BUFF", buff);
 
     return 0;
 }

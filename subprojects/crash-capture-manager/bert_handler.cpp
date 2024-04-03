@@ -7,8 +7,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <phosphor-logging/elog-errors.hpp>
-#include <phosphor-logging/elog.hpp>
 #include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/timer.hpp>
 #include <xyz/openbmc_project/Common/error.hpp>
@@ -29,7 +27,6 @@ extern "C"
 }
 
 PHOSPHOR_LOG2_USING;
-using namespace phosphor::logging;
 
 #undef BERT_DEBUG
 

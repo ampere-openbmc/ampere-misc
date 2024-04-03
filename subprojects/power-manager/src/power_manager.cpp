@@ -17,7 +17,6 @@
 #include "power_manager.hpp"
 
 #include <nlohmann/json.hpp>
-#include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/exception.hpp>
 #include <xyz/openbmc_project/Common/error.hpp>

@@ -22,6 +22,7 @@ executable(
     dependencies: [
         dependency('systemd'),
         dependency('sdbusplus'),
+        dependency('phosphor-logging'),
     ],
     install: true,
     install_dir: get_option('sbindir')

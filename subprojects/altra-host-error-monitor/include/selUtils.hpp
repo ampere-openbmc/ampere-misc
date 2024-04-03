@@ -16,9 +16,7 @@
 
 #pragma once
 
-#include <phosphor-logging/elog-errors.hpp>
-#include <phosphor-logging/elog.hpp>
-#include <phosphor-logging/log.hpp>
+#include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/asio/connection.hpp>
 #include <sdbusplus/bus.hpp>
 
@@ -33,7 +31,6 @@ namespace ampere
 {
 namespace sel
 {
-using namespace phosphor::logging;
 
 const static constexpr u_int8_t IPMI_SEL_OEM_RECORD_TYPE = 0xC0;
 const static constexpr u_int8_t SEL_OEM_DATA_MAX_SIZE = 13;
@@ -52,7 +49,7 @@ static void addSelOem(const char* message, const std::vector<uint8_t>& selData)
         [](const boost::system::error_code ec) {
         if (ec)
         {
-            log<level::ERR>("Set: Dbus error: ");
+            lg2::error("Set: Dbus error: ");
         }
     },
         selLogService, selLogPath, selLogIntf, selLogMethod, message, selData,

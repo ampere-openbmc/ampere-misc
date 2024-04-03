@@ -19,14 +19,14 @@
 #include "utils.hpp"
 
 #include <math.h>
+#include <systemd/sd-journal.h>
 
 #include <boost/asio/io_context.hpp>
-#include <phosphor-logging/elog-errors.hpp>
-#include <phosphor-logging/elog.hpp>
-#include <phosphor-logging/log.hpp>
+#include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/asio/connection.hpp>
 #include <sdbusplus/asio/property.hpp>
 #include <sdbusplus/asio/sd_event.hpp>
+#include <sdbusplus/bus/match.hpp>
 #include <sdbusplus/timer.hpp>
 
 #include <filesystem>
@@ -35,8 +35,6 @@
 #include <map>
 #include <memory>
 #include <regex>
-
-using namespace phosphor::logging;
 
 namespace ampere
 {
@@ -385,7 +383,7 @@ void updateRASUELed(bool b)
                                  [](const boost::system::error_code ec) {
         if (ec)
         {
-            log<level::DEBUG>("RAS_UE Led group does not exist");
+            lg2::debug("RAS_UE Led group does not exist");
         }
     });
 }
@@ -1615,13 +1613,13 @@ static void
         {
             if (*variant == "xyz.openbmc_project.State.Host.HostState.Running")
             {
-                log<level::INFO>("Host is turned on ");
+                lg2::info("Host is turned on ");
                 getErrorsAndEvents();
                 rasTimer->start(std::chrono::microseconds(1200000), true);
             }
             else
             {
-                log<level::INFO>("Host is turned off ");
+                lg2::info("Host is turned off ");
                 rasTimer->stop();
                 updateRASUELed(false);
             }
@@ -1641,7 +1639,7 @@ static void
 int main()
 {
     int ret;
-    log<level::INFO>("Starting xyz.openbmc_project.AmpRas.service");
+    lg2::info("Starting xyz.openbmc_project.AmpRas.service");
 
     boost::asio::io_context io;
 
@@ -1658,7 +1656,7 @@ int main()
     ret = ampere::utils::initHwmonRootPath();
     if (!ret)
     {
-        log<level::ERR>("Failed to get Root Path of SMPro Hwmon\n");
+        lg2::error("Failed to get Root Path of SMPro Hwmon\n");
         return 1;
     }
 

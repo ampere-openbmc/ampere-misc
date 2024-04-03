@@ -16,8 +16,7 @@
 
 #include "nmi_interface.hpp"
 
-#include <phosphor-logging/elog-errors.hpp>
-#include <phosphor-logging/elog.hpp>
+#include <phosphor-logging/lg2.hpp>
 #include <xyz/openbmc_project/Common/error.hpp>
 
 namespace dbus
@@ -30,7 +29,6 @@ NMI::NMI(sdbusplus::bus_t& bus, const char* path) :
 
 void NMI::nmi()
 {
-    using namespace phosphor::logging;
     constexpr auto SYSTEMD_SERVICE = "org.freedesktop.systemd1";
     constexpr auto SYSTEMD_OBJ_PATH = "/org/freedesktop/systemd1";
     constexpr auto SYSTEMD_INTERFACE = "org.freedesktop.systemd1.Manager";
@@ -40,11 +38,12 @@ void NMI::nmi()
     method.append("nmi.service", "replace");
     try
     {
+        lg2::info("Call nmi.service...");
         bus.call_noreply(method);
     }
     catch (const sdbusplus::exception_t& e)
     {
-        log<level::ERR>("Error occur when call nmi.service");
+        lg2::error("Error occur when call nmi.service");
     }
 }
 } // namespace nmi
