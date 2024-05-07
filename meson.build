@@ -22,10 +22,6 @@ if get_option('state-logger').enabled()
     subproject('state-logger')
 endif
 
-if get_option('ampere-trst-wa').enabled()
-    subproject('ampere-trst-wa')
-endif
-
 if get_option('ampere-cpu-present').enabled()
     subproject('ampere-cpu-present')
 endif

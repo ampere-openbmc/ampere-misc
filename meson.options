@@ -20,13 +20,6 @@ option(
 )
 
 option(
-    'ampere-trst-wa',
-    type : 'feature',
-    value : 'disabled',
-    description : 'Enable building ampere-trst-wa'
-)
-
-option(
     'power-manager',
     type : 'feature',
     value : 'disabled',
