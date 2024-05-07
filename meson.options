@@ -34,13 +34,6 @@ option(
 )
 
 option(
-    'ampere-cpu-present',
-    type : 'feature',
-    value : 'disabled',
-    description : 'Enable building ampere-cpu-present'
-)
-
-option(
     'altra-host-error-monitor',
     type : 'feature',
     value : 'disabled',

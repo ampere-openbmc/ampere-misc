@@ -22,10 +22,6 @@ if get_option('state-logger').enabled()
     subproject('state-logger')
 endif
 
-if get_option('ampere-cpu-present').enabled()
-    subproject('ampere-cpu-present')
-endif
-
 if get_option('power-manager').enabled()
     subproject('power-manager')
 endif
