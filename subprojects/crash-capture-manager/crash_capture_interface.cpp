@@ -14,11 +14,12 @@
 namespace crashcapture
 {
 PHOSPHOR_LOG2_USING;
+using namespace sdbusplus::bus::match::rules;
 
 CrashCapture::CrashCapture(sdbusplus::bus::bus& bus, const char* objPath) :
     CrashCaptureInherit(bus, objPath), bus(bus), objectPath(objPath)
 {
-    handleDbusEventSignal();
+    handleBootProgressMatch();
     initBertHostOnEvent();
     bertClaimSPITimeOut();
     handleBmcUnavailable();
@@ -78,109 +79,53 @@ void CrashCapture::executeTransition(TriggerAction value)
     }
 }
 
-void CrashCapture::handleDbusEventSignal()
+void CrashCapture::handleBootProgressMatch()
 {
-    handleNumericSensorEventSignal();
-}
-
-void CrashCapture::handleNumericSensorEventSignal()
-{
-    numericSensorEventSignal = std::make_unique<sdbusplus::bus::match_t>(
+    constexpr auto bootUEFICompleted =
+        "xyz.openbmc_project.State.Boot.Progress.ProgressStages.OSStart";
+    bootProgessMatch = std::make_unique<sdbusplus::bus::match_t>(
         bus,
-        sdbusplus::bus::match::rules::type::signal() +
-            sdbusplus::bus::match::rules::member("NumericSensorEvent") +
-            sdbusplus::bus::match::rules::path("/xyz/openbmc_project/pldm") +
-            sdbusplus::bus::match::rules::interface(
-                "xyz.openbmc_project.PLDM.Event"),
+        propertiesChanged("/xyz/openbmc_project/state/host0",
+                          "xyz.openbmc_project.State.Boot.Progress"),
         [&](sdbusplus::message::message& msg) {
         try
         {
-            uint8_t tid{};
-            uint16_t sensorId{};
-            uint8_t eventState{};
-            uint8_t preEventState{};
-            uint8_t sensorDataSize{};
-            uint32_t presentReading{};
-
-            /*
-             * Read the information of event
-             */
-            msg.read(tid, sensorId, eventState, preEventState, sensorDataSize,
-                     presentReading);
-
-            /*
-             * Handle Overall sensor
-             */
-            if (sensorId == 175)
+            std::string statusInterface;
+            std::map<std::string, std::variant<std::string>> msgData;
+            msg.read(statusInterface, msgData);
+            if (onceTimeReadBERT)
             {
-                handleBertHostBootEvent(tid, sensorId, presentReading);
+                return;
+            }
+            auto propertyMap = msgData.find("BootProgress");
+            if (propertyMap != msgData.end())
+            {
+                // Extract the BootProgress
+                auto& bootProgress = std::get<std::string>(propertyMap->second);
+                if (bootProgress == bootUEFICompleted)
+                {
+                    info("UEFI boot completed. Read BERT");
+                    onceTimeReadBERT = true;
+                    bertHostFailTimer->stop();
+                    bertHandler(bus, HOST_ON);
+                    return;
+                }
             }
         }
         catch (const std::exception& e)
         {
-            std::cerr << "handleNumericSensorEventSignal failed\n"
-                      << e.what() << std::endl;
+            error("Failed to match BootProgress property changed."
+                  "ERROR = {ERR_EXCEP}",
+                  "ERR_EXCEP", e.what());
         }
     });
-}
-
-void CrashCapture::handleBertHostBootEvent([[maybe_unused]] uint8_t tid,
-                                           [[maybe_unused]] uint16_t sensorId,
-                                           uint32_t presentReading)
-{
-    bool failFlg = false;
-    std::stringstream strStream;
-    uint8_t byte3 = (presentReading & 0x000000ff);
-    uint8_t byte2 = (presentReading & 0x0000ff00) >> 8;
-
-    // Sensor report action is fail
-    if (0x81 == byte2)
-    {
-        failFlg = true;
-    }
-
-    // Handle DDR training fail
-    if ((0x96 == byte3) || (0x99 == byte3))
-    {
-        failFlg = true;
-    }
-
-    /* Handler BERT flow in case host on. BMC should handshake
-     * with Host to accessing SPI-NOR when UEFI boot complete.
-     */
-    if (failFlg)
-    {
-        hostStatus = HOST_FAILURE;
-    }
-    else
-    {
-        hostStatus = HOST_BOOTING;
-    }
-    if ((byte3 == 0x03) && (byte2 == 0x10) && checkBertFlag)
-    {
-        info("Host is on, UEFI boot complete. Read SPI to check valid BERT");
-        bertHandler(bus, HOST_ON);
-        checkBertFlag = false;
-        bertHostFailTimer->stop();
-    }
 }
 
 void CrashCapture::bertHostFailTimeOutHdl(void)
 {
     info("Host boot fail. Read BERT");
-    checkBertFlag = false;
+    bertHostFailTimer->stop();
     bertHandler(bus, HOST_ON);
-}
-
-void CrashCapture::bertHostOnTimeOutHdl(void)
-{
-    if (hostStatus == HOST_COMPLETE)
-    {
-        info("UEFI already boot completed. Read BERT");
-        bertHostFailTimer->stop();
-        checkBertFlag = false;
-        bertHandler(bus, HOST_ON);
-    }
 }
 
 void CrashCapture::bertPowerLockTimeOutHdl(void)
@@ -191,8 +136,6 @@ void CrashCapture::bertPowerLockTimeOutHdl(void)
 
 void CrashCapture::initBertHostOnEvent(void)
 {
-    bertHostOnTimer = std::make_unique<sdbusplus::Timer>(
-        [&](void) { bertHostOnTimeOutHdl(); });
     bertHostFailTimer = std::make_unique<sdbusplus::Timer>(
         [&](void) { bertHostFailTimeOutHdl(); });
     bertPowerLockTimer = std::make_unique<sdbusplus::Timer>(
@@ -201,14 +144,36 @@ void CrashCapture::initBertHostOnEvent(void)
 
 void CrashCapture::handleBertHostOnEvent(void)
 {
-    /* Need to delay about 10s to make sure host sent
-     * boot progress event to BMC
-     */
-    bertHostOnTimer->start(std::chrono::milliseconds(BERT_HOSTON_TIMEOUT));
-    /* Check bert after host boot fails 120s timeout */
+    constexpr auto bootStateSrv = "xyz.openbmc_project.State.Host";
+    constexpr auto bootStateInterface =
+        "xyz.openbmc_project.State.Boot.Progress";
+    constexpr auto bootStatePath = "/xyz/openbmc_project/state/host0";
+    constexpr auto bootUEFICompleted =
+        "xyz.openbmc_project.State.Boot.Progress.ProgressStages.OSStart";
+
+    try
+    {
+        auto propVal = crashcapture::utils::getDbusProperty(
+            bus, bootStateSrv, bootStatePath, bootStateInterface,
+            "BootProgress");
+        const auto& currBootProgress = std::get<std::string>(propVal);
+
+        if (currBootProgress == bootUEFICompleted)
+        {
+            info("UEFI has already boot completed. Read BERT");
+            onceTimeReadBERT = true;
+            bertHandler(bus, HOST_ON);
+            return;
+        }
+    }
+    catch (const std::exception& e)
+    {
+        error("Failed to get Boot Value. ERROR = {ERR_EXCEP}", "ERR_EXCEP",
+              e.what());
+    }
+
+    /* 120 seconds timer for checking host boot fails */
     bertHostFailTimer->start(std::chrono::milliseconds(BERT_HOSTFAIL_TIMEOUT));
-    checkBertFlag = true;
-    hostStatus = HOST_COMPLETE;
 }
 
 void CrashCapture::handleBmcUnavailable(void)

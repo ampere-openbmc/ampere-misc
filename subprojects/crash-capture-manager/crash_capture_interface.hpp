@@ -45,33 +45,22 @@ class CrashCapture : public CrashCaptureInherit
     bool triggerProcess(bool value) override;
 
   private:
-    enum bert_host_status
-    {
-        HOST_BOOTING = 0,
-        HOST_COMPLETE = 1,
-        HOST_FAILURE = 2,
-        HOST_UA = 3,
-    };
-
     /** @brief Persistent sdbusplus DBus bus connection. **/
     sdbusplus::bus::bus& bus;
 
     /** @brief object path */
     std::string objectPath;
 
-    /** @brief Used to subscribe to numeric sensor event  **/
-    std::unique_ptr<sdbusplus::bus::match_t> numericSensorEventSignal;
+    /** @brief  D-Bus property changed signal match  **/
+    std::unique_ptr<sdbusplus::bus::match_t> bootProgessMatch;
 
-    bool checkBertFlag = false;
-    bert_host_status hostStatus = HOST_UA;
-    std::unique_ptr<sdbusplus::Timer> bertHostOffTimer, bertHostOnTimer,
-        bertHostFailTimer, bertPowerLockTimer;
+    bool onceTimeReadBERT = false;
+
+    std::unique_ptr<sdbusplus::Timer> bertHostOffTimer, bertHostFailTimer,
+        bertPowerLockTimer;
 
     void executeTransition(TriggerAction value);
-    void handleNumericSensorEventSignal();
-    void handleDbusEventSignal();
-    void handleBertHostBootEvent(uint8_t tid, uint16_t sensorId,
-                                 uint32_t presentReading);
+    void handleBootProgressMatch(void);
     void handleBertHostOnEvent(void);
     void initBertHostOnEvent(void);
     void bertHostFailTimeOutHdl(void);

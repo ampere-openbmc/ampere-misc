@@ -38,7 +38,6 @@ uint_files = [
 
 systemd = dependency('systemd')
 conf_data = configuration_data()
-conf_data.set('BERT_HOSTON_TIMEOUT', get_option('ampere-bert-hoston-timer'))
 conf_data.set('BERT_HOSTFAIL_TIMEOUT', get_option('ampere-bert-hostfail-timer'))
 conf_data.set('BERT_CLAIMSPI_TIMEOUT', get_option('ampere-bert-claim-spi-timer'))
 conf_data.set_quoted('HANDSHAKE_SPI_SCRIPT', get_option('ampere-handshake-spi-script'))
