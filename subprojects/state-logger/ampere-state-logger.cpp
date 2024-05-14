@@ -65,8 +65,8 @@ inline static sdbusplus::bus::match::match
 
                 sd_journal_send("MESSAGE=%s", message.c_str(),
                                 "REDFISH_MESSAGE_ID=%s", redfishMsgId.c_str(),
-                                "REDFISH_MESSAGE_ARGS=%s,%s", "Host",
-                                "Host state is off", NULL);
+                                "REDFISH_MESSAGE_ARGS=%s", "Host state is off",
+                                NULL);
             }
             else if (*variant ==
                      "xyz.openbmc_project.State.Host.HostState.Running")
@@ -76,8 +76,8 @@ inline static sdbusplus::bus::match::match
 
                 sd_journal_send("MESSAGE=%s", message.c_str(),
                                 "REDFISH_MESSAGE_ID=%s", redfishMsgId.c_str(),
-                                "REDFISH_MESSAGE_ARGS=%s,%s", "Host",
-                                "Host state is on", NULL);
+                                "REDFISH_MESSAGE_ARGS=%s", "Host state is on",
+                                NULL);
             }
         }
     };
