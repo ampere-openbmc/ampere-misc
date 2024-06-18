@@ -600,7 +600,7 @@ void jed_file_parse_header(FILE* jed_fd)
     // File
     char tmp_buf[160];
 
-    // Header paser
+    // Header parser
     while (fgets(tmp_buf, 120, jed_fd) != NULL)
     {
 #ifdef VERBOSE_DEBUG

@@ -82,7 +82,7 @@ class PowerCap : public CapItf
     std::string totalPwrObjectPath;
     std::string totalPwrItf;
 
-    /** @brief minimun sampling periodic in microseconds */
+    /** @brief minimum sampling periodic in microseconds */
     const uint64_t minSamplPeriod = 1000000;
 
     /** @brief timer event */

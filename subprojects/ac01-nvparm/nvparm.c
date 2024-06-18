@@ -406,7 +406,7 @@ static int flash_verify(int dev_fd, int fil_fd, ulong offset, char* argv1_ptr,
     /*
      * After flash write operation file pointer and device pointer
      * are moved to other location based upon the size. For verify
-     * operation we need to move back the file poitner and device
+     * operation we need to move back the file pointer and device
      * pointer to original location
      */
     tmp = flash_rewind(fil_fd, 0x0, argv1_ptr);

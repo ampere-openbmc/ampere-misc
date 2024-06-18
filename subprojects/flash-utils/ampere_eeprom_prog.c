@@ -322,7 +322,7 @@ loop:
     buf_off = 0;
 
     /*
-     * The slave I2C EEPROM bus addresses start from 0x50 upto 0x53.
+     * The slave I2C EEPROM bus addresses start from 0x50 up to 0x53.
      * Each I2C slave can address a range of 64KB.
      * Readjust the offset to address a total of 256KB eeprom memory.
      */
@@ -398,7 +398,7 @@ static int program_fw(int fd, struct smpmpro_ctl* ctl, void* buff, ssize_t sz)
     int ret = 0;
     uint32_t crc32_checksum;
 
-    printf("Programing FW file: 0/%d (0%%)", (int)sz);
+    printf("Programming FW file: 0/%d (0%%)", (int)sz);
     crc32_checksum = crc32(0, (unsigned char*)buff, sz);
     bytes_wr = eeprom_rd_wr(fd, ctl, 0, (uint8_t*)buff, sz, EEPROM_WR_FLG);
     if (bytes_wr == -1)
@@ -489,7 +489,7 @@ int main(int argc, char** argv)
     if (ctl.detect_mode)
         return 0;
 
-    /* Attemp to read from EEPROM */
+    /* Attempt to read from EEPROM */
     if (ctl.read_mode)
     {
         printf("Reading %d bytes from EEPROM: ... ", ctl.rc);
