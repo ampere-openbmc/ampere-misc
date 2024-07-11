@@ -23,9 +23,9 @@ executable(
 
 systemd = dependency('systemd')
 
-configure_file(
-  input: 'xyz.openbmc_project.state_logger.service',
-  output: 'xyz.openbmc_project.state_logger.service',
-  copy: true,
+fs = import('fs')
+fs.copyfile(
+  'xyz.openbmc_project.state_logger.service',
+  install: true,
   install_dir: systemd.get_variable('systemdsystemunitdir')
   )

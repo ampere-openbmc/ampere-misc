@@ -26,10 +26,9 @@ executable(
         )
 
 systemd = dependency('systemd')
-configure_file(
-    copy: true,
-    input: 'xyz.openbmc_project.altra_host_error_monitor.service',
-    output: 'xyz.openbmc_project.altra_host_error_monitor.service',
+fs = import('fs')
+fs.copyfile(
+    'xyz.openbmc_project.altra_host_error_monitor.service',
     install: true,
     install_dir: systemd.get_pkgconfig_variable('systemdsystemunitdir')
 )
