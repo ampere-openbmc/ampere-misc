@@ -223,7 +223,7 @@ int cpld_verify(char* file)
         return -1;
     }
 
-    cur_dev->cpld_verify(fp_in);
+    ret = cur_dev->cpld_verify(fp_in);
     fclose(fp_in);
 
     return ret;

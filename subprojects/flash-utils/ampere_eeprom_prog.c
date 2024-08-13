@@ -525,7 +525,8 @@ int main(int argc, char** argv)
     if (!buf)
     {
         printf("Not enough memory\n");
-        return -ENOMEM;
+        ret = -ENOMEM;
+        goto err1;
     }
     fseek(fp, 0, SEEK_SET);
     fread(buf, sz, 1, fp);
@@ -535,13 +536,15 @@ int main(int argc, char** argv)
         ret = program_fw(fd, &ctl, buf, sz);
         if (ret)
         {
-            free(buf);
-            return -EIO;
+            ret = -EIO;
+            goto err0;
         }
     }
 
+err0:
     free(buf);
+err1:
     fclose(fp);
 
-    return 0;
+    return ret;
 }
