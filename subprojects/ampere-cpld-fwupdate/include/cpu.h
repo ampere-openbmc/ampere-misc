@@ -43,7 +43,7 @@ int cpu_get_id();
  * JTAG_MAX_XFER_DATA_LEN bits will fail.
  */
 #define JTAG_MAX_XFER_DATA_LEN_BYTE_ALIGNED                                    \
-    (((JTAG_MAX_XFER_DATA_LEN)-1) & (~0x7))
+    (((JTAG_MAX_XFER_DATA_LEN) - 1) & (~0x7))
 #define JTAG_MAX_XFER_DATA_LEN_BYTE_ALIGNED_DIV8                               \
     ((JTAG_MAX_XFER_DATA_LEN_BYTE_ALIGNED) >> 3)
 

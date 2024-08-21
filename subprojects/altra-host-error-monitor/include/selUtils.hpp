@@ -47,11 +47,11 @@ static void addSelOem(const char* message, const std::vector<uint8_t>& selData)
 {
     conn->async_method_call(
         [](const boost::system::error_code ec) {
-        if (ec)
-        {
-            lg2::error("Set: Dbus error: ");
-        }
-    },
+            if (ec)
+            {
+                lg2::error("Set: Dbus error: ");
+            }
+        },
         selLogService, selLogPath, selLogIntf, selLogMethod, message, selData,
         IPMI_SEL_OEM_RECORD_TYPE);
     usleep(300000);

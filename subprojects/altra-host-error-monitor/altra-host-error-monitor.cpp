@@ -232,8 +232,8 @@ ErrorData errorTypeTable[] = {
      "AmpereCritical"},
 };
 
-const static constexpr u_int8_t NUMBER_OF_ERRORS = sizeof(errorTypeTable) /
-                                                   sizeof(ErrorData);
+const static constexpr u_int8_t NUMBER_OF_ERRORS =
+    sizeof(errorTypeTable) / sizeof(ErrorData);
 
 struct ErrorInfo
 {
@@ -364,8 +364,8 @@ EventData eventTypeTable[] = {
      STATUS_READ_TYPE, S1_DIMM_2X_REFRESSH, "DIMM_2X_REFRESH_RATE",
      "AmpereWarning"}};
 
-const static constexpr u_int8_t NUMBER_OF_EVENTS = sizeof(eventTypeTable) /
-                                                   sizeof(EventData);
+const static constexpr u_int8_t NUMBER_OF_EVENTS =
+    sizeof(eventTypeTable) / sizeof(EventData);
 u_int16_t curEventMask[NUMBER_OF_EVENTS] = {};
 
 std::unique_ptr<sdbusplus::Timer> rasTimer __attribute__((init_priority(101)));
@@ -378,14 +378,14 @@ std::unique_ptr<sdbusplus::bus::match::match> hostStateMatch;
  */
 void updateRASUELed(bool b)
 {
-    sdbusplus::asio::setProperty(*(ampere::sel::conn), ledGrpService, ledObj,
-                                 ledInf, assertProperty, b,
-                                 [](const boost::system::error_code ec) {
-        if (ec)
-        {
-            lg2::debug("RAS_UE Led group does not exist");
-        }
-    });
+    sdbusplus::asio::setProperty(
+        *(ampere::sel::conn), ledGrpService, ledObj, ledInf, assertProperty, b,
+        [](const boost::system::error_code ec) {
+            if (ec)
+            {
+                lg2::debug("RAS_UE Led group does not exist");
+            }
+        });
 }
 
 static int logInternalErrorToIpmiSEL(ErrorData data, InternalFields eFields)
@@ -544,8 +544,8 @@ static int prepareInternalErrData(const std::string& errLine,
         // data high
         tmpStr = errLine.substr(GROUP2_POS, LEN_OF_GROUP);
         ampere::utils::reverseStr(tmpStr);
-        tmpStr.erase(
-            0, std::min(tmpStr.find_first_not_of('0'), tmpStr.size() - 1));
+        tmpStr.erase(0, std::min(tmpStr.find_first_not_of('0'),
+                                 tmpStr.size() - 1));
         // data low
         std::string t;
         t = errLine.substr(GROUP3_POS, LEN_OF_GROUP);
@@ -911,8 +911,8 @@ static int logEventDIMMHot(EventData data, EventFields eFields)
                 eventData[7] = 0;
                 eventData[8] = bitMask;
             }
-            curEventMask[data.idx] = curEventMask[data.idx] &
-                                     (0xffff - bitMask);
+            curEventMask[data.idx] =
+                curEventMask[data.idx] & (0xffff - bitMask);
             ampere::sel::addSelOem("OEM RAS error:", eventData);
 
             snprintf(redFishMsg, MAX_MSG_LEN, "Deasserted.");
@@ -968,8 +968,8 @@ static int logEventDIMM2xRefresh(EventData data, EventFields eFields)
         else if ((!(eFields.data & bitMask)) && (currentMask & bitMask))
         {
             eventData[5] = (DIR_DEASSERTED << 7) | data.eventReadType;
-            curEventMask[data.idx] = curEventMask[data.idx] &
-                                     (0xffff - bitMask);
+            curEventMask[data.idx] =
+                curEventMask[data.idx] & (0xffff - bitMask);
             snprintf(redFishMsg, MAX_MSG_LEN, "Deasserted.");
             ampere::sel::addSelOem("OEM RAS error:", eventData);
             sd_journal_send("REDFISH_MESSAGE_ID=%s", redFishMsgID,

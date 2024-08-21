@@ -154,11 +154,11 @@ static int detect_arg_handler(int argc, char** argv, int index)
 
 static char* arglist[] = {"-b", "-s", "-t", "-r", "-p", "-d", "-f", NULL};
 
-static int (*handlerlist[])(int, char**,
-                            int) = {bus_arg_handler,      slave_arg_handler,
-                                    dev_type_arg_handler, read_arg_handler,
-                                    prog_arg_handler,     detect_arg_handler,
-                                    file_arg_handler,     NULL};
+static int (*handlerlist[])(int, char**, int) = {
+    bus_arg_handler,      slave_arg_handler,
+    dev_type_arg_handler, read_arg_handler,
+    prog_arg_handler,     detect_arg_handler,
+    file_arg_handler,     NULL};
 
 static void hexdump(char* buf, ssize_t len)
 {

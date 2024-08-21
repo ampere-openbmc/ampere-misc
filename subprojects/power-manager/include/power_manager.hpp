@@ -22,9 +22,7 @@ class PowerManager
     virtual ~PowerManager() = default;
 
     PowerManager(sdbusplus::bus_t& bus, const char* path,
-                 const sdeventplus::Event& event) :
-        bus(bus),
-        objectPath(path)
+                 const sdeventplus::Event& event) : bus(bus), objectPath(path)
     {
         parsePowerManagerCfg();
         capObject = std::make_unique<powerCapClass>(

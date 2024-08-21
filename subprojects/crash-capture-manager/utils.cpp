@@ -103,8 +103,8 @@ void addOEMSelLog(sdbusplus::bus::bus& bus, std::string& msg,
 {
     try
     {
-        auto method = bus.new_method_call(logBusName, logPath, logIntf,
-                                          "IpmiSelAddOem");
+        auto method =
+            bus.new_method_call(logBusName, logPath, logIntf, "IpmiSelAddOem");
         method.append(msg, evtData, recordType);
 
         auto selReply = bus.call(method);

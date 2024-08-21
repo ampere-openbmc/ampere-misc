@@ -88,37 +88,38 @@ void CrashCapture::handleBootProgressMatch()
         propertiesChanged("/xyz/openbmc_project/state/host0",
                           "xyz.openbmc_project.State.Boot.Progress"),
         [&](sdbusplus::message::message& msg) {
-        try
-        {
-            std::string statusInterface;
-            std::map<std::string, std::variant<std::string>> msgData;
-            msg.read(statusInterface, msgData);
-            if (onceTimeReadBERT)
+            try
             {
-                return;
-            }
-            auto propertyMap = msgData.find("BootProgress");
-            if (propertyMap != msgData.end())
-            {
-                // Extract the BootProgress
-                auto& bootProgress = std::get<std::string>(propertyMap->second);
-                if (bootProgress == bootUEFICompleted)
+                std::string statusInterface;
+                std::map<std::string, std::variant<std::string>> msgData;
+                msg.read(statusInterface, msgData);
+                if (onceTimeReadBERT)
                 {
-                    info("UEFI boot completed. Read BERT");
-                    onceTimeReadBERT = true;
-                    bertHostFailTimer->stop();
-                    bertHandler(bus, HOST_ON);
                     return;
                 }
+                auto propertyMap = msgData.find("BootProgress");
+                if (propertyMap != msgData.end())
+                {
+                    // Extract the BootProgress
+                    auto& bootProgress =
+                        std::get<std::string>(propertyMap->second);
+                    if (bootProgress == bootUEFICompleted)
+                    {
+                        info("UEFI boot completed. Read BERT");
+                        onceTimeReadBERT = true;
+                        bertHostFailTimer->stop();
+                        bertHandler(bus, HOST_ON);
+                        return;
+                    }
+                }
             }
-        }
-        catch (const std::exception& e)
-        {
-            error("Failed to match BootProgress property changed."
-                  "ERROR = {ERR_EXCEP}",
-                  "ERR_EXCEP", e.what());
-        }
-    });
+            catch (const std::exception& e)
+            {
+                error("Failed to match BootProgress property changed."
+                      "ERROR = {ERR_EXCEP}",
+                      "ERR_EXCEP", e.what());
+            }
+        });
 }
 
 void CrashCapture::bertHostFailTimeOutHdl(void)
@@ -136,10 +137,12 @@ void CrashCapture::bertPowerLockTimeOutHdl(void)
 
 void CrashCapture::initBertHostOnEvent(void)
 {
-    bertHostFailTimer = std::make_unique<sdbusplus::Timer>(
-        [&](void) { bertHostFailTimeOutHdl(); });
-    bertPowerLockTimer = std::make_unique<sdbusplus::Timer>(
-        [&](void) { bertPowerLockTimeOutHdl(); });
+    bertHostFailTimer = std::make_unique<sdbusplus::Timer>([&](void) {
+        bertHostFailTimeOutHdl();
+    });
+    bertPowerLockTimer = std::make_unique<sdbusplus::Timer>([&](void) {
+        bertPowerLockTimeOutHdl();
+    });
 }
 
 void CrashCapture::handleBertHostOnEvent(void)

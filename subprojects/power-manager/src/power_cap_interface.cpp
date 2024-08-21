@@ -43,9 +43,9 @@ constexpr auto SYSTEMD_INTERFACE = "org.freedesktop.systemd1.Manager";
 PowerCap::PowerCap(sdbusplus::bus_t& bus, const char* path,
                    const sdeventplus::Event& event, std::string totalPwrSrv,
                    std::string totalPwrObjectPath, std::string totalPwrItf) :
-    CapItf(bus, path),
-    bus(bus), objectPath(path), event(event), totalPwrSrv(totalPwrSrv),
-    totalPwrObjectPath(totalPwrObjectPath), totalPwrItf(totalPwrItf),
+    CapItf(bus, path), bus(bus), objectPath(path), event(event),
+    totalPwrSrv(totalPwrSrv), totalPwrObjectPath(totalPwrObjectPath),
+    totalPwrItf(totalPwrItf),
     correctTimer(event, std::bind(&PowerCap::callBackCorrectTimer, this)),
     samplingTimer(event, std::bind(&PowerCap::callBackSamplingTimer, this))
 {
@@ -90,8 +90,8 @@ bool PowerCap::powerCapEnable(bool value)
          * Enable sampling timer
          */
         uint64_t samplePeriod = CapItf::samplingPeriod();
-        samplePeriod = (samplePeriod < minSamplPeriod) ? minSamplPeriod
-                                                       : samplePeriod;
+        samplePeriod =
+            (samplePeriod < minSamplPeriod) ? minSamplPeriod : samplePeriod;
         samplingTimer.restart(std::chrono::microseconds(samplePeriod));
     }
     else if (false == value && value != currentAct)
@@ -266,8 +266,8 @@ void PowerCap::logPowerLimitEvent(bool assertFlg)
     std::string redfishMsgId;
     std::string message;
     uint32_t powerCap = CapItf::powerCap();
-    std::string msgArgs = std::to_string(currentPower) + "," +
-                          std::to_string(powerCap);
+    std::string msgArgs =
+        std::to_string(currentPower) + "," + std::to_string(powerCap);
 
     if (true == assertFlg)
     {
@@ -292,9 +292,9 @@ void PowerCap::turnHardPowerOff()
     constexpr auto chassisStateItf = "xyz.openbmc_project.State.Chassis";
     std::variant<std::string> requestTurnPowerOff =
         "xyz.openbmc_project.State.Chassis.Transition.Off";
-    auto method = bus.new_method_call(chassisStateServer,
-                                      chassisStateObjectPath,
-                                      "org.freedesktop.DBus.Properties", "Set");
+    auto method =
+        bus.new_method_call(chassisStateServer, chassisStateObjectPath,
+                            "org.freedesktop.DBus.Properties", "Set");
 
     method.append(chassisStateItf);
     method.append("RequestedPowerTransition");

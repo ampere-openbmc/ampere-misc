@@ -895,8 +895,8 @@ int main(int argc, char* argv[])
          * entry with crc16 = 0
          */
         blob[entry_no].crc16 = 0;
-        blob[entry_no].crc16 = crc16((uint8_t*)&blob[entry_no],
-                                     sizeof(struct nvparam_entry));
+        blob[entry_no].crc16 =
+            crc16((uint8_t*)&blob[entry_no], sizeof(struct nvparam_entry));
 
         if (flash_erase(dev_fd, nvparam_base, sizeof(blob)) < 0)
         {
@@ -977,8 +977,8 @@ int main(int argc, char* argv[])
         {
             tmp_crc16 = blob[index].crc16;
             blob[index].crc16 = 0;
-            cal_crc16 = crc16((uint8_t*)&blob[index],
-                              sizeof(struct nvparam_entry));
+            cal_crc16 =
+                crc16((uint8_t*)&blob[index], sizeof(struct nvparam_entry));
             if (tmp_crc16 == cal_crc16)
             {
                 log_printf(
@@ -1024,8 +1024,8 @@ int main(int argc, char* argv[])
          * entry with crc16 = 0
          */
         blob[entry_no].crc16 = 0;
-        cal_crc16 = crc16((uint8_t*)&blob[entry_no],
-                          sizeof(struct nvparam_entry));
+        cal_crc16 =
+            crc16((uint8_t*)&blob[entry_no], sizeof(struct nvparam_entry));
         if (tmp_crc16 != cal_crc16)
             log_printf(LOG_NORMAL, " (Mismatch! Calculated CRC16: %x)\n",
                        cal_crc16);

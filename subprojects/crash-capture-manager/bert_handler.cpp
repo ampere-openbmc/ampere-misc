@@ -48,8 +48,9 @@ bool isMasked = false;
 
 void bertClaimSPITimeOut()
 {
-    bertClaimSPITimer = std::make_unique<sdbusplus::Timer>(
-        [&](void) { bertClaimSPITimeOutHdl(); });
+    bertClaimSPITimer = std::make_unique<sdbusplus::Timer>([&](void) {
+        bertClaimSPITimeOutHdl();
+    });
 }
 
 static void addBertSELLog(sdbusplus::bus::bus& bus, uint8_t crashIndex,
@@ -117,10 +118,10 @@ static int handshakeSPI(bert_handshake_cmd val)
     }
 
     pidStr << getpid();
-    std::string hsStr = (val == START_HS) ? "start_handshake"
-                                          : "stop_handshake";
-    std::string cmd = std::string(HANDSHAKE_SPI_SCRIPT) + " " + hsStr + " " +
-                      pidStr.str();
+    std::string hsStr =
+        (val == START_HS) ? "start_handshake" : "stop_handshake";
+    std::string cmd =
+        std::string(HANDSHAKE_SPI_SCRIPT) + " " + hsStr + " " + pidStr.str();
     ret = system(cmd.c_str());
     if (ret)
     {
@@ -148,8 +149,8 @@ static int enableAccessHostSpiNor(bert_host_state state)
     int ret = 0;
 
     pidStr << getpid();
-    std::string cmd = std::string(HANDSHAKE_SPI_SCRIPT) + " lock " +
-                      pidStr.str();
+    std::string cmd =
+        std::string(HANDSHAKE_SPI_SCRIPT) + " lock " + pidStr.str();
     ret = system(cmd.c_str());
     if (ret)
     {
@@ -185,8 +186,8 @@ static int disableAccessHostSpiNor(bert_host_state state)
     int ret = 0;
 
     pidStr << getpid();
-    std::string cmd = std::string(HANDSHAKE_SPI_SCRIPT) + " unlock " +
-                      pidStr.str();
+    std::string cmd =
+        std::string(HANDSHAKE_SPI_SCRIPT) + " unlock " + pidStr.str();
     ret = system(cmd.c_str());
     if (ret)
     {

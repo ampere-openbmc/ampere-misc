@@ -281,9 +281,9 @@ static int jed_file_parser(FILE* jed_fd, CPLDInfo* dev_info, int cf_size,
     const char TAG_USERCODE[] = "NOTE User Electronic";
     /**TAG Information**/
 
-    int ReadLineSize = LATTICE_COL_SIZE +
-                       2; // the len of 128 only contain data size, '\n' need to
-                          // be considered, too.
+    int ReadLineSize =
+        LATTICE_COL_SIZE + 2; // the len of 128 only contain data size, '\n'
+                              // need to be considered, too.
     char tmp_buf[ReadLineSize];
     char data_buf[LATTICE_COL_SIZE];
     unsigned int CFStart = 0;
@@ -1121,8 +1121,8 @@ static int jtag_cpld_verify(CPLDInfo* dev_info)
 
         ast_jtag_tdo_xfer(JTAG_STATE_TLRESET, LATTICE_COL_SIZE, buff);
 
-        result = memcmp(buff, &dev_info->CF[current_addr],
-                        sizeof(unsigned int));
+        result =
+            memcmp(buff, &dev_info->CF[current_addr], sizeof(unsigned int));
 
         if (result)
         {
@@ -1185,8 +1185,8 @@ static int jtag_cpld_lcm3d_verify(CPLDInfo* dev_info)
 
         ast_jtag_tdo_xfer(JTAG_STATE_TLRESET, LATTICE_COL_SIZE, buff);
 
-        result = memcmp(buff, &dev_info->CF[current_addr],
-                        sizeof(unsigned int));
+        result =
+            memcmp(buff, &dev_info->CF[current_addr], sizeof(unsigned int));
 
         if (result)
         {
@@ -2013,9 +2013,9 @@ static int i2c_cpld_get_ver(unsigned int* ver)
     }
 
     // Shift in READ USERCODE(0xC0) instruction;
-    ret = i2c_rdwr_msg_transfer(cpld.fd, cpld.slave << 1, user_code_cmd,
-                                sizeof(user_code_cmd), dr_data,
-                                sizeof(dr_data));
+    ret =
+        i2c_rdwr_msg_transfer(cpld.fd, cpld.slave << 1, user_code_cmd,
+                              sizeof(user_code_cmd), dr_data, sizeof(dr_data));
     if (ret != 0)
     {
         printf("i2c_cpld_get_ver() read usercode failed\n");
@@ -2212,8 +2212,8 @@ static int i2c_cpld_verify(CPLDInfo* dev_info)
             return ret;
         }
         swap_bit_byte(buff, 16);
-        result = memcmp(buff, &dev_info->CF[current_addr],
-                        sizeof(unsigned int));
+        result =
+            memcmp(buff, &dev_info->CF[current_addr], sizeof(unsigned int));
         if (result)
         {
             CPLD_DEBUG(
