@@ -6,7 +6,7 @@
 
 #define BERT_LOG_DIR "/usr/share/pldm/bert/"
 #define BERT_NAME_MAX_SIZE 15
-#define BERT_MAX_NUM_FILE 3
+#define BERT_MAX_NUM_FILE 8
 #define BERT_CRASH_OCM_SIZE 0x40000
 #define BLOCK_SIZE 65536 /* 64KB */
 #define NUM_RETRY 3
