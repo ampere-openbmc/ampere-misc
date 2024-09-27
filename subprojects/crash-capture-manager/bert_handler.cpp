@@ -241,9 +241,11 @@ static int spinorfsWrite(char* file, char* buff, uint32_t offset, uint32_t size)
 }
 
 static int handshakeReadSPI(bert_host_state state, char* file, char* buff,
-                            uint32_t size)
+                            uint32_t size, int* retSize)
 {
     uint32_t j = 0;
+    int readSize = 0;
+    *retSize = 0;
 
     if (state == HOST_ON)
     {
@@ -253,30 +255,36 @@ static int handshakeReadSPI(bert_host_state state, char* file, char* buff,
             {
                 return -1;
             }
-            if (spinorfsRead(file, buff + j * BLOCK_SIZE, j * BLOCK_SIZE,
-                             BLOCK_SIZE) < 0)
+            readSize = spinorfsRead(file, buff + j * BLOCK_SIZE, j * BLOCK_SIZE,
+                                    BLOCK_SIZE);
+            if (readSize < 0)
             {
                 goto exit_err;
             }
+            *retSize += readSize;
             handshakeSPI(STOP_HS);
         }
         if (handshakeSPI(START_HS))
         {
             return -1;
         }
-        if (spinorfsRead(file, buff + j * BLOCK_SIZE, j * BLOCK_SIZE,
-                         size - j * BLOCK_SIZE) < 0)
+        readSize = spinorfsRead(file, buff + j * BLOCK_SIZE, j * BLOCK_SIZE,
+                                size - j * BLOCK_SIZE);
+        if (readSize < 0)
         {
             goto exit_err;
         }
+        *retSize += readSize;
         handshakeSPI(STOP_HS);
     }
     else
     {
-        if (spinorfsRead(file, buff, 0, size) < 0)
+        readSize = spinorfsRead(file, buff, 0, size);
+        if (readSize < 0)
         {
             goto exit_err;
         }
+        *retSize = readSize;
     }
     return 0;
 
@@ -423,6 +431,9 @@ static int handshakeSPIHandler(sdbusplus::bus::bus& bus, bert_host_state state)
     AmpereBertPartitionInfo bertInfo;
     AmpereBertPayloadSection* bertPayload;
     bool isValidBert = false;
+    int readSize = 0;
+    int writeSize = 0;
+    int bertMaxIndex = 0;
 
     ret = initSPIDeviceRetry(state, &devFd, NUM_RETRY);
     if (ret)
@@ -432,14 +443,23 @@ static int handshakeSPIHandler(sdbusplus::bus::bus& bus, bert_host_state state)
     }
     /* Read Bert Partition Info from latest.ras */
     ret = handshakeReadSPI(state, (char*)bertFileNvp.c_str(), (char*)&bertInfo,
-                           sizeof(AmpereBertPartitionInfo));
+                           sizeof(AmpereBertPartitionInfo), &readSize);
     if (ret)
     {
         error("Read {VALUE} failure", "VALUE", bertFileNvp.c_str());
         goto exit;
     }
+
+    if (readSize % (sizeof(AmpereBertFileInfo)))
+    {
+        error("Incorrectly size of latest.ras");
+        goto exit;
+    }
+    bertMaxIndex = readSize / (sizeof(AmpereBertFileInfo));
+    writeSize = readSize;
+
 #ifdef BERT_DEBUG
-    for (int i = 0; i < BERT_MAX_NUM_FILE; i++)
+    for (int i = 0; i < bertMaxIndex; i++)
     {
         std::cerr << "BERT_PARTITION_INFO size = " << bertInfo.files[i].size
                   << "\n";
@@ -449,7 +469,7 @@ static int handshakeSPIHandler(sdbusplus::bus::bus& bus, bert_host_state state)
                   << bertInfo.files[i].flags.reg << "\n";
     }
 #endif
-    for (i = 0; i < BERT_MAX_NUM_FILE; i++)
+    for (i = 0; i < bertMaxIndex; i++)
     {
         if (!bertInfo.files[i].flags.member.valid ||
             !bertInfo.files[i].flags.member.pendingBMC)
@@ -465,7 +485,7 @@ static int handshakeSPIHandler(sdbusplus::bus::bus& bus, bert_host_state state)
         std::vector<char> crashBufVector(bertInfo.files[i].size, 0);
         char* crashBuf = crashBufVector.data();
         ret = handshakeReadSPI(state, bertInfo.files[i].name, crashBuf,
-                               bertInfo.files[i].size);
+                               bertInfo.files[i].size, &readSize);
         if (!ret)
         {
             std::ofstream out(bertDumpPath.c_str(), std::ofstream::binary);
@@ -524,7 +544,7 @@ static int handshakeSPIHandler(sdbusplus::bus::bus& bus, bert_host_state state)
 
     /* Write back to BERT file info to indicate BMC consumed BERT record */
     ret = handshakeWriteSPI(state, (char*)bertFileNvp.c_str(), (char*)&bertInfo,
-                            sizeof(AmpereBertPartitionInfo));
+                            writeSize);
     if (ret < 0)
     {
         error("Update {VALUE} failure", "VALUE", bertFileNvp.c_str());
