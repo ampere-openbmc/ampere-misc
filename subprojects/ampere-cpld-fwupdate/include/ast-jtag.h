@@ -9,6 +9,7 @@ typedef uint64_t __u64;
 
 #define JTAG_DEVICE0 "/dev/jtag0"
 #define JTAG_DEVICE1 "/dev/jtag1"
+#define JTAG_FILE_LOCK "/var/lock/LCK..jtag"
 
 /******************************************************************************************************************/
 void ast_jtag_set_mode(unsigned int mode);

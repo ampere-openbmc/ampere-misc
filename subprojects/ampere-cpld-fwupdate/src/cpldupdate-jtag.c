@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <getopt.h>
 #include <pthread.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,7 +35,7 @@ static void usage(FILE* fp, char** argv)
 {
     fprintf(fp,
             "\nampere_cpldupdate_jtag v0.0.2 Copyright 2022.\n\n"
-            "Usage: %s -t <type> -d <jtag_device> [options]\n\n"
+            "Usage: %s -d <jtag_device> [options]\n\n"
             "Jtag Device: Default is jtag0\n"
             " 0 - /dev/jtag0\n"
             " 1 - /dev/jtag1\n"
@@ -50,6 +51,7 @@ static void usage(FILE* fp, char** argv)
 }
 
 static const char short_options[] = "hviup:c:t:d:";
+static char jdev_file_lck[50];
 
 static const struct option long_options[] = {
     {"help", no_argument, NULL, 'h'},
@@ -72,6 +74,63 @@ static void printf_failure()
     printf("+=======+\n");
     printf("| FAIL! |\n");
     printf("+=======+\n\n");
+}
+
+static void handle_signal(int sig)
+{
+    remove(jdev_file_lck);
+    printf("Terminated by signal %d\n", sig);
+    exit(EXIT_FAILURE);
+}
+
+static int lock_device(int jtag_device)
+{
+    FILE* fptr;
+    char pid[50];
+    sprintf(jdev_file_lck, "%s%d", JTAG_FILE_LOCK, jtag_device);
+
+    if (access(jdev_file_lck, F_OK) == 0)
+    {
+        /* The lock file exists */
+        printf("Error: The /dev/jtag%d is locked by process ", jtag_device);
+        /* Read the pid from the file */
+        fptr = fopen(jdev_file_lck, "r");
+        while (fgets(pid, 50, fptr) != NULL)
+        {
+            printf("%s", pid);
+        }
+        printf("\n");
+        goto busy;
+    }
+    else
+    {
+        /* The lock file doesn't exist */
+        /* Support interupt signal handler
+         *    SIGINT : Keyboard press ctrl-C
+         *    SIGTERM : Kill process
+         *    SIGKILL : Kill signal
+         *    SIGHUP : Hangup the process
+         *.   SIGQUIT : Core dumped
+         */
+        signal(SIGINT, handle_signal);
+        signal(SIGTERM, handle_signal);
+        signal(SIGKILL, handle_signal);
+        signal(SIGHUP, handle_signal);
+        signal(SIGQUIT, handle_signal);
+
+        /* Create the lock file with pid */
+        fptr = fopen(jdev_file_lck, "w");
+        /* Store pid to lock file */
+        fprintf(fptr, "%d", getpid());
+        goto notBusy;
+    }
+
+busy:
+    fclose(fptr);
+    return -1;
+notBusy:
+    fclose(fptr);
+    return 0;
 }
 
 int main(int argc, char* argv[])
@@ -143,55 +202,67 @@ int main(int argc, char* argv[])
         }
     }
 
+    if (lock_device(cpld_info.jtag_device))
+    {
+        exit(EXIT_FAILURE);
+    }
+
     if (cpld.get_cpuid)
     {
-        if (cpu_probe(cpld_info.jtag_device))
+        rc = cpu_probe(cpld_info.jtag_device);
+        if (rc)
         {
             printf("CPU probe failed!\n");
-            exit(EXIT_FAILURE);
+            goto unlock_device;
         }
 
-        if (cpu_get_id())
+        rc = cpu_get_id();
+        if (rc)
         {
             printf("CPU IDcode: NA\n");
         }
         cpu_close();
-        exit(EXIT_SUCCESS);
+        goto unlock_device;
     }
 
-    if (cpld_probe(INTF_JTAG, &cpld_info))
+    rc = cpld_probe(INTF_JTAG, &cpld_info);
+    if (rc)
     {
         printf("CPLD_INTF probe failed!\n");
-        exit(EXIT_FAILURE);
+        goto unlock_device;
     }
 
-    if (cpld_scan(INTF_JTAG))
+    rc = cpld_scan(INTF_JTAG);
+    if (rc)
     {
         printf("CPLD_INTF scan failed!\n");
-        exit(EXIT_FAILURE);
+        goto end_of_func;
     }
 
     if (cpld.get_version)
     {
-        if (cpld_get_ver((unsigned int*)&cpld_var))
+        rc = cpld_get_ver((unsigned int*)&cpld_var);
+        if (rc)
         {
             printf("CPLD Version: NA\n");
         }
-        exit(EXIT_SUCCESS);
+        goto end_of_func;
     }
 
     if (cpld.get_device)
     {
-        if (cpld_get_device_id((unsigned int*)&cpld_var))
+        rc = cpld_get_device_id((unsigned int*)&cpld_var);
+        if (rc)
         {
             printf("CPLD DeviceID: NA\n");
         }
-        exit(EXIT_SUCCESS);
+        goto end_of_func;
     }
 
     if (cpld.checksum)
     {
-        if (cpld_get_checksum(in_name, &crc))
+        rc = cpld_get_checksum(in_name, &crc);
+        if (rc)
         {
             printf("CPLD Checksum: NA\n");
         }
@@ -199,20 +270,24 @@ int main(int argc, char* argv[])
         {
             printf("CPLD Checksum: %X\n", crc);
         }
-        exit(EXIT_SUCCESS);
+        goto end_of_func;
     }
 
     if (cpld.program)
     {
         // Print CPLD Version
-        if (cpld_get_ver((unsigned int*)&cpld_var))
+        rc = cpld_get_ver((unsigned int*)&cpld_var);
+        if (rc)
         {
             printf("CPLD Version: NA\n");
+            goto end_of_func;
         }
         // Print CPLD Device ID
-        if (cpld_get_device_id((unsigned int*)&cpld_var))
+        rc = cpld_get_device_id((unsigned int*)&cpld_var);
+        if (rc)
         {
             printf("CPLD DeviceID: NA\n");
+            goto end_of_func;
         }
         rc = cpld_program(in_name, key, 0);
         if (rc < 0)
@@ -224,6 +299,8 @@ int main(int argc, char* argv[])
 
 end_of_func:
     cpld_intf_close(INTF_JTAG);
+unlock_device:
+    remove(jdev_file_lck);
     if (rc == 0)
     {
         printf_pass();
