@@ -1,6 +1,7 @@
 [Unit]
 Description= Crash Capture Management
 After=multi-user.target
+Before=phosphor-discover-system-state@0.service
 
 [Service]
 ExecStart=@bindir@/crash-capture-manager
