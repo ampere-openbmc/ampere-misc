@@ -63,7 +63,11 @@ void CrashCapture::executeTransition(TriggerAction value)
 {
     if (value == CrashCaptureInherit::TriggerAction::Bert)
     {
-        info("BERT is trigger");
+        info("BERT is trigger. Stop Ampere sysfw hang handler.");
+        if (system("systemctl stop ampere-sysfw-hang-handler.service"))
+        {
+            error("Failed to call stop hand-detection service");
+        }
     }
     else if (value == CrashCaptureInherit::TriggerAction::Diagnostic)
     {
