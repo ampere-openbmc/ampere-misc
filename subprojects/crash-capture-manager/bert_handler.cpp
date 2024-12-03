@@ -528,7 +528,8 @@ static int handshakeSPIHandler(sdbusplus::bus::bus& bus, bert_host_state state)
             AmpereGenericHeader* cperData = &(bertPayload->genericHeader);
             addBertSELLog(bus, i, bertPayload->header.sectionType,
                           cperData->subTypeId);
-            crashcapture::utils::addFaultLogToRedfish(bus, primaryLogId, type);
+            crashcapture::utils::addFaultLogToRedfish(bus, faultLogFilePath,
+                                                      type);
             isValidBert = true;
         }
         else
