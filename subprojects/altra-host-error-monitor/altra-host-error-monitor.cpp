@@ -451,13 +451,13 @@ static int logInternalErrorToRedfish(ErrorData data, InternalFields eFields)
 
     if (eFields.subType == SMPMPRO_WARNING)
     {
-        snprintf(redfishMsgID, MAX_MSG_LEN, "OpenBMC.0.1.%s.Warning",
+        snprintf(redfishMsgID, MAX_MSG_LEN, "OpenBMC.0.1.%s",
                  data.redFishMsgID);
         snprintf(redfishMsg, MAX_MSG_LEN, "Warning %s.", sErrorCode);
     }
     else
     {
-        snprintf(redfishMsgID, MAX_MSG_LEN, "OpenBMC.0.1.%s.Critical",
+        snprintf(redfishMsgID, MAX_MSG_LEN, "OpenBMC.0.1.%s",
                  data.redFishMsgID);
         if (eFields.subType == SMPMPRO_ERROR)
             snprintf(redfishMsg, MAX_MSG_LEN, "Error %s.", sErrorCode);
@@ -611,8 +611,7 @@ static int logErrorToRedfish(ErrorData data, ErrorFields eFields)
     u_int16_t temp;
     ErrorInfo eInfo;
 
-    snprintf(redFishMsgID, MAX_MSG_LEN, "OpenBMC.0.1.%s.Critical",
-             data.redFishMsgID);
+    snprintf(redFishMsgID, MAX_MSG_LEN, "OpenBMC.0.1.%s", data.redFishMsgID);
     temp = (eFields.errType << 8) + eFields.subType;
     if (mapOfOccur.size() != 0 && mapOfOccur.count(temp) > 0)
     {
@@ -636,7 +635,7 @@ static int logErrorToRedfish(ErrorData data, ErrorFields eFields)
     if (temp == 0xffff)
     {
         char comp[MAX_MSG_LEN] = {'\0'};
-        snprintf(redFishMsgID, MAX_MSG_LEN, "OpenBMC.0.1.%s.Critical",
+        snprintf(redFishMsgID, MAX_MSG_LEN, "OpenBMC.0.1.%s",
                  AMPERE_REFISH_REGISTRY);
         snprintf(comp, MAX_MSG_LEN, "%s: %s", data.errName, redFishComp);
         sd_journal_send("REDFISH_MESSAGE_ID=%s", redFishMsgID,
@@ -678,12 +677,12 @@ static int logErrorToRedfish(ErrorData data, ErrorFields eFields)
         if (apiIdx == error_mem_ue)
         {
             snprintf(redFishECCMsgID, MAX_MSG_LEN,
-                     "OpenBMC.0.1.MemoryExtendedECCUEData.Critical");
+                     "OpenBMC.0.1.MemoryExtendedECCUEData");
         }
         else
         {
             snprintf(redFishECCMsgID, MAX_MSG_LEN,
-                     "OpenBMC.0.1.MemoryExtendedECCCEData.Warning");
+                     "OpenBMC.0.1.MemoryExtendedECCCEData");
         }
         sd_journal_send("REDFISH_MESSAGE_ID=%s", redFishECCMsgID,
                         "REDFISH_MESSAGE_ARGS=%d,%d,%d", bank, row, col, NULL);
@@ -865,8 +864,7 @@ static int logEventDIMMHot(EventData data, EventFields eFields)
     eventData[4] = data.eventNum;
     eventData[6] = 0x1 | EVENT_DATA_1 | EVENT_DATA_3;
 
-    snprintf(redFishMsgID, MAX_MSG_LEN, "OpenBMC.0.1.%s.Warning",
-             data.redFishMsgID);
+    snprintf(redFishMsgID, MAX_MSG_LEN, "OpenBMC.0.1.%s", data.redFishMsgID);
     for (i = 0; i < SMPRO_DATA_REG_SIZE; i++)
     {
         bitMask = pow(2, i);
@@ -942,8 +940,7 @@ static int logEventDIMM2xRefresh(EventData data, EventFields eFields)
     eventData[4] = data.eventNum;
     eventData[6] = 0x1 | EVENT_DATA_1 | EVENT_DATA_3;
 
-    snprintf(redFishMsgID, MAX_MSG_LEN, "OpenBMC.0.1.%s.Warning",
-             data.redFishMsgID);
+    snprintf(redFishMsgID, MAX_MSG_LEN, "OpenBMC.0.1.%s", data.redFishMsgID);
     for (channel = 0; channel < NUMBER_DIMM_CHANNEL; channel++)
     {
         bitMask = pow(2, channel);
@@ -996,8 +993,7 @@ static int logEventVrdHot(EventData data, EventFields eFields)
     eventData[4] = data.eventNum;
     eventData[6] = 0x1 | EVENT_DATA_1 | EVENT_DATA_3;
 
-    snprintf(redFishMsgID, MAX_MSG_LEN, "OpenBMC.0.1.%s.Warning",
-             data.redFishMsgID);
+    snprintf(redFishMsgID, MAX_MSG_LEN, "OpenBMC.0.1.%s", data.redFishMsgID);
     /* SoC VRD hot */
     if ((eFields.data & BIT_0) && (!(currentMask & BIT_0)))
     {
@@ -1256,8 +1252,7 @@ static int logEventVrdWarnFault(EventData data, EventFields eFields)
     eventData[4] = data.eventNum;
     eventData[6] = 0x1 | EVENT_DATA_1 | EVENT_DATA_3;
 
-    snprintf(redFishMsgID, MAX_MSG_LEN, "OpenBMC.0.1.%s.Warning",
-             data.redFishMsgID);
+    snprintf(redFishMsgID, MAX_MSG_LEN, "OpenBMC.0.1.%s", data.redFishMsgID);
     /* SoC VRD fault/warning */
     if ((eFields.data & BIT_0) && (!(currentMask & BIT_0)))
     {
