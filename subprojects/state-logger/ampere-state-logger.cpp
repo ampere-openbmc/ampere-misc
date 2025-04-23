@@ -147,7 +147,7 @@ inline static sdbusplus::bus::match::match
 
 int main(int argc, char* argv[])
 {
-    boost::asio::io_service io;
+    boost::asio::io_context io;
 
     auto conn = std::make_shared<sdbusplus::asio::connection>(io);
     auto server = sdbusplus::asio::object_server(conn);
