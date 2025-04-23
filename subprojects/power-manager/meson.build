@@ -2,9 +2,7 @@ project(
     'power-manager',
     'cpp',
     version: '1.0',
-    default_options: [
-        'cpp_std=c++23',
-    ],
+    default_options: ['cpp_std=c++23'],
 )
 
 cpp = meson.get_compiler('cpp')
@@ -24,7 +22,7 @@ executable(
     ],
     include_directories: ['include'],
     install: true,
-    install_dir: get_option('sbindir')
+    install_dir: get_option('sbindir'),
 )
 
 systemd = dependency('systemd')
@@ -35,14 +33,12 @@ subdir('service')
 
 share_power_manager_folder = get_option('datadir') / 'power-manager'
 install_emptydir(share_power_manager_folder)
-conf_files = [
-    'power-manager-cfg.json',
-    ]
+conf_files = ['power-manager-cfg.json']
 
 foreach file : conf_files
     install_data(
         file,
         install_mode: 'rwxr-xr-x',
-        install_dir: share_power_manager_folder
+        install_dir: share_power_manager_folder,
     )
 endforeach

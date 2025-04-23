@@ -1,4 +1,6 @@
-project('ampere-cpld-fwupdate', 'c',
+project(
+    'ampere-cpld-fwupdate',
+    'c',
     default_options: [
         'buildtype=debugoptimized',
         'warning_level=3',
@@ -9,35 +11,37 @@ project('ampere-cpld-fwupdate', 'c',
 
 add_project_arguments('-Wno-psabi', language: 'c')
 
-deps = [dependency('systemd'),
-dependency('phosphor-logging'),
-]
+deps = [dependency('systemd'), dependency('phosphor-logging')]
 
-executable('ampere_cpldupdate_jtag',
-           'src/cpldupdate-jtag.c',
-           'src/ast-jtag.c',
-           'src/ast-jtag-intf.c',
-           'src/i2c-lib.c',
-           'src/lattice.c',
-           'src/anlogic.c',
-           'src/cpld.c',
-           'src/cpu.c',
-           implicit_include_directories: false,
-           include_directories: ['include'],
-           dependencies: deps,
-           install: true,
-           install_dir: get_option('bindir'))
-           
-executable('ampere_cpldupdate_i2c',
-           'src/cpldupdate-i2c.c',
-           'src/ast-jtag.c',
-           'src/ast-jtag-intf.c',
-           'src/i2c-lib.c',
-           'src/lattice.c',
-           'src/anlogic.c',
-           'src/cpld.c',
-           implicit_include_directories: false,
-           include_directories: ['include'],
-           dependencies: deps,
-           install: true,
-           install_dir: get_option('bindir'))
+executable(
+    'ampere_cpldupdate_jtag',
+    'src/cpldupdate-jtag.c',
+    'src/ast-jtag.c',
+    'src/ast-jtag-intf.c',
+    'src/i2c-lib.c',
+    'src/lattice.c',
+    'src/anlogic.c',
+    'src/cpld.c',
+    'src/cpu.c',
+    implicit_include_directories: false,
+    include_directories: ['include'],
+    dependencies: deps,
+    install: true,
+    install_dir: get_option('bindir'),
+)
+
+executable(
+    'ampere_cpldupdate_i2c',
+    'src/cpldupdate-i2c.c',
+    'src/ast-jtag.c',
+    'src/ast-jtag-intf.c',
+    'src/i2c-lib.c',
+    'src/lattice.c',
+    'src/anlogic.c',
+    'src/cpld.c',
+    implicit_include_directories: false,
+    include_directories: ['include'],
+    dependencies: deps,
+    install: true,
+    install_dir: get_option('bindir'),
+)

@@ -1,55 +1,55 @@
 option(
     'nmi-manager',
-    type : 'feature',
-    value : 'disabled',
-    description : 'Enable building nmi-manager'
+    type: 'feature',
+    value: 'disabled',
+    description: 'Enable building nmi-manager',
 )
 
 option(
     'ampere-cpld-fwupdate',
-    type : 'feature',
-    value : 'disabled',
-    description : 'Enable building ampere-cpld-fwupdate'
+    type: 'feature',
+    value: 'disabled',
+    description: 'Enable building ampere-cpld-fwupdate',
 )
 
 option(
     'state-logger',
-    type : 'feature',
-    value : 'disabled',
-    description : 'Enable building state-logger'
+    type: 'feature',
+    value: 'disabled',
+    description: 'Enable building state-logger',
 )
 
 option(
     'power-manager',
-    type : 'feature',
-    value : 'disabled',
-    description : 'Enable building power-manager'
+    type: 'feature',
+    value: 'disabled',
+    description: 'Enable building power-manager',
 )
 
 option(
     'crash-capture-manager',
-    type : 'feature',
-    value : 'disabled',
-    description : 'Enable building crash-capture-manager'
+    type: 'feature',
+    value: 'disabled',
+    description: 'Enable building crash-capture-manager',
 )
 
 option(
     'altra-host-error-monitor',
-    type : 'feature',
-    value : 'disabled',
-    description : 'Enable building altra-host-error-monitor'
+    type: 'feature',
+    value: 'disabled',
+    description: 'Enable building altra-host-error-monitor',
 )
 
 option(
     'flash-utils',
-    type : 'feature',
-    value : 'disabled',
-    description : 'Enable building flash-utils'
+    type: 'feature',
+    value: 'disabled',
+    description: 'Enable building flash-utils',
 )
 
 option(
     'ac01-nvparm',
-    type : 'feature',
-    value : 'disabled',
-    description : 'Enable building ac01-nvparm'
+    type: 'feature',
+    value: 'disabled',
+    description: 'Enable building ac01-nvparm',
 )
