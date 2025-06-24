@@ -1579,8 +1579,8 @@ static void getErrorsAndEvents()
     }
 }
 
-static void
-    handleHostStateMatch(std::shared_ptr<sdbusplus::asio::connection>& conn)
+static void handleHostStateMatch(
+    std::shared_ptr<sdbusplus::asio::connection>& conn)
 {
     rasTimer = std::make_unique<sdbusplus::Timer>(getErrorsAndEvents);
 

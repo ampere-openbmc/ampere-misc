@@ -33,8 +33,8 @@
 #include <iostream>
 #include <sstream>
 
-inline static sdbusplus::bus::match::match
-    startHostStateMonitor(std::shared_ptr<sdbusplus::asio::connection> conn)
+inline static sdbusplus::bus::match::match startHostStateMonitor(
+    std::shared_ptr<sdbusplus::asio::connection> conn)
 {
     auto startEventMatcherCallback = [](sdbusplus::message::message& msg) {
         boost::container::flat_map<std::string, std::variant<std::string>>
@@ -91,8 +91,8 @@ inline static sdbusplus::bus::match::match
     return startEventMatcher;
 }
 
-inline static sdbusplus::bus::match::match
-    startPowerGoodMonitor(std::shared_ptr<sdbusplus::asio::connection> conn)
+inline static sdbusplus::bus::match::match startPowerGoodMonitor(
+    std::shared_ptr<sdbusplus::asio::connection> conn)
 {
     auto startEventMatcherCallback = [](sdbusplus::message::message& msg) {
         boost::container::flat_map<std::string, std::variant<int>>

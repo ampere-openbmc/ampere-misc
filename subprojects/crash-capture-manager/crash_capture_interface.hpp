@@ -35,8 +35,8 @@ class CrashCapture : public CrashCaptureInherit
     CrashCapture(sdbusplus::bus::bus& bus, const char* objPath);
 
     /** @brief Set value of TriggerActions **/
-    CrashCaptureBase::TriggerAction
-        triggerActions(TriggerAction value) override;
+    CrashCaptureBase::TriggerAction triggerActions(
+        TriggerAction value) override;
 
     /** @brief Set value of TriggerUE **/
     bool triggerUE(bool value) override;

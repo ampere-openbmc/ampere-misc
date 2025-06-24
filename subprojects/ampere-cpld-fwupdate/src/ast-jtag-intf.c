@@ -6,8 +6,8 @@ extern struct jtag_ops jtag0_ops;
 
 static struct jtag_ops* jtag_ops = &jtag0_ops;
 
-__attribute__((constructor)) void __attribute__((constructor))
-ast_jtag_init(void)
+__attribute__((constructor)) void __attribute__((constructor)) ast_jtag_init(
+    void)
 {
     if ((access(JTAG_DEVICE0, F_OK) == 0) || (access(JTAG_DEVICE1, F_OK) == 0))
     {

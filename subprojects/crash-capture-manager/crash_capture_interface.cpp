@@ -25,8 +25,8 @@ CrashCapture::CrashCapture(sdbusplus::bus::bus& bus, const char* objPath) :
     handleBmcUnavailable();
 };
 
-CrashCaptureBase::TriggerAction
-    CrashCapture::triggerActions(TriggerAction value)
+CrashCaptureBase::TriggerAction CrashCapture::triggerActions(
+    TriggerAction value)
 {
     info("Setting the TriggerActions field to {VALUE}", "VALUE", value);
 
