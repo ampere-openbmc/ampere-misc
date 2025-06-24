@@ -133,7 +133,7 @@ static int parsePlatformConfiguration()
     return 0;
 }
 
-static int initHwmonRootPath()
+static bool initHwmonRootPath()
 {
     bool foundRootPath = false;
 
@@ -154,12 +154,8 @@ static int initHwmonRootPath()
         }
         hwmonRootDir[socket] = "";
     }
-    if (foundRootPath)
-    {
-        return 1;
-    }
 
-    return 0;
+    return foundRootPath;
 }
 
 static u_int64_t parseHexStrToUInt64(std::string str)

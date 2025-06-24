@@ -1582,6 +1582,8 @@ static void getErrorsAndEvents()
 static void handleHostStateMatch(
     std::shared_ptr<sdbusplus::asio::connection>& conn)
 {
+    static bool firstOn = true;
+
     rasTimer = std::make_unique<sdbusplus::Timer>(getErrorsAndEvents);
 
     auto startEventMatcherCallback = [](sdbusplus::message::message& msg) {
@@ -1609,6 +1611,15 @@ static void handleHostStateMatch(
             if (*variant == "xyz.openbmc_project.State.Host.HostState.Running")
             {
                 lg2::info("Host is turned on ");
+                if (firstOn)
+                {
+                    firstOn = false;
+                    if (!ampere::utils::initHwmonRootPath())
+                    {
+                        lg2::error("Failed to get Root Path of SMPro Hwmon\n");
+                        throw std::exception{};
+                    }
+                }
                 getErrorsAndEvents();
                 rasTimer->start(std::chrono::microseconds(1200000), true);
             }
@@ -1634,7 +1645,6 @@ static void handleHostStateMatch(
 int main()
 {
     int ret;
-    lg2::info("Starting xyz.openbmc_project.AmpRas.service");
 
     boost::asio::io_context io;
 
@@ -1648,12 +1658,6 @@ int main()
     auto conn = std::make_shared<sdbusplus::asio::connection>(io);
 
     ampere::sel::initSelUtil(conn);
-    ret = ampere::utils::initHwmonRootPath();
-    if (!ret)
-    {
-        lg2::error("Failed to get Root Path of SMPro Hwmon\n");
-        return 1;
-    }
 
     sdbusplus::asio::sd_event_wrapper sdEvents(io);
 
