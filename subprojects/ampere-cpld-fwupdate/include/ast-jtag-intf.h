@@ -5,10 +5,10 @@
 
 struct jtag_ops
 {
-    int (*open)();
-    void (*close)();
+    int (*open)(int);
+    void (*close)(void);
     void (*set_mode)(unsigned int);
-    unsigned int (*get_freq)();
+    unsigned int (*get_freq)(void);
     int (*set_freq)(unsigned int);
     int (*run_test_idle)(unsigned char, unsigned char, unsigned char);
     int (*sir_xfer)(unsigned char, unsigned int, unsigned int);
